@@ -142,6 +142,12 @@ Module Export Op <: OPERATORS.
   Definition unop := unop'.
   Definition binop := Cop.binary_operation.
 
+  Inductive operator' :=
+    | Unary (op : unop)
+    | Binary (op : binop).
+
+  Definition operator := operator'.
+
   Definition sem_unop (uop: unop) (v: val) (ty: type) : option val :=
     match uop with
     | UnaryOp op => Cop.sem_unary_operation op v (cltype ty) Memory.Mem.empty
@@ -152,6 +158,13 @@ Module Export Op <: OPERATORS.
                                    (v2: val) (ty2: type) : option val :=
     Cop.sem_binary_operation
       empty_composite_env op v1 (cltype ty1) v2 (cltype ty2) Memory.Mem.empty.
+
+  Definition sem_op op vtl :=
+    match op, vtl with
+      | Unary uop, (v, t) :: nil => sem_unop uop v t
+      | Binary bop, (v1, t1) :: (v2, t2) :: nil => sem_binop bop v1 t1 v2 t2
+      | _, _ => None
+    end.
 
   Definition is_bool_type (ty: type) : bool :=
     match ty with
@@ -207,6 +220,13 @@ Module Export Op <: OPERATORS.
          | Errors.OK ty' => typecl ty'
          | Errors.Error _ => None
          end.
+
+  Definition type_op op tl :=
+    match op, tl with
+      | Unary uop, t :: nil => type_unop uop t
+      | Binary bop, t1 :: t2 :: nil => type_binop bop t1 t2
+      | _, _ => None
+    end.
 
   (* Neither Vundef nor Vptr is well-typed.
 
@@ -784,6 +804,17 @@ Module Export Op <: OPERATORS.
         DestructCases; repeat split; try discriminate; try ContradictNotVptr; auto.
   Qed.
 
+  Lemma pres_sem_op : forall op tys ty vs v,
+    type_op op tys = Some ty ->
+    sem_op op (List.combine vs tys) = Some v ->
+    List.Forall2 wt_val vs tys ->
+    wt_val v ty.
+  Proof.
+  intros [uop | binop] [| ty1 [| ty2 [| ? ?]]] ty [| v1 [| v2 [| x ?]]] v Htype Hsem Hwt;
+  simpl in *; try discriminate; repeat take (List.Forall2 wt_val _ _) and inv it;
+  eauto using pres_sem_unop, pres_sem_binop.
+  Qed.
+
   Lemma val_dec   : forall v1 v2 : val, {v1 = v2} + {v1 <> v2}.
   Proof Values.Val.eq.
 
@@ -816,6 +847,9 @@ Module Export Op <: OPERATORS.
   Proof.
     decide equality.
   Qed.
+
+  Lemma op_dec : forall op1 op2 : operator, {op1 = op2} + {op1 <> op2}.
+  Proof. repeat decide equality. Qed.
 
   Lemma sem_unary_operation_any_mem:
     forall op v ty M1 M2,

@@ -57,11 +57,10 @@ Module Type TRANSLATION
 
     Fixpoint translate_exp (e: CESyn.exp) : exp :=
       match e with
-      | Econst c           => Const c
-      | Evar x ty          => tovar (x, ty)
-      | Ewhen e c x        => translate_exp e
-      | Eunop op e ty      => Unop op (translate_exp e) ty
-      | Ebinop op e1 e2 ty => Binop op (translate_exp e1) (translate_exp e2) ty
+      | Econst c     => Const c
+      | Evar x ty    => tovar (x, ty)
+      | Ewhen e c x  => translate_exp e
+      | Eop op el ty => Op op (map translate_exp el) ty
       end.
 
     Fixpoint translate_cexp (x: ident) (e: cexp) : stmt :=

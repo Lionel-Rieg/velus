@@ -116,26 +116,17 @@ environment.
           sem_var_instant x absent ->
           sem_exp_instant s absent ->
           sem_exp_instant (Ewhen s x b) absent
-    | Sunop_eq:
-        forall le op c c' ty,
-          sem_exp_instant le (present c) ->
-          sem_unop op c (typeof le) = Some c' ->
-          sem_exp_instant (Eunop op le ty) (present c')
-    | Sunop_abs:
-        forall le op ty,
-          sem_exp_instant le absent ->
-          sem_exp_instant (Eunop op le ty) absent
-    | Sbinop_eq:
-        forall le1 le2 op c1 c2 c' ty,
-          sem_exp_instant le1 (present c1) ->
-          sem_exp_instant le2 (present c2) ->
-          sem_binop op c1 (typeof le1) c2 (typeof le2) = Some c' ->
-          sem_exp_instant (Ebinop op le1 le2 ty) (present c')
-    | Sbinop_abs:
-        forall le1 le2 op ty,
-          sem_exp_instant le1 absent ->
-          sem_exp_instant le2 absent ->
-          sem_exp_instant (Ebinop op le1 le2 ty) absent.
+    | Sop_eq:
+        forall lel op cl c' ty,
+          lel <> nil ->
+          List.Forall2 sem_exp_instant lel (List.map present cl) ->
+          sem_op op (List.combine cl (List.map typeof lel)) = Some c' ->
+          sem_exp_instant (Eop op lel ty) (present c')
+    | Sop_abs:
+        forall lel op ty,
+          lel <> nil ->
+          List.Forall (fun e => sem_exp_instant e absent) lel ->
+          sem_exp_instant (Eop op lel ty) absent.
 
     Definition sem_exps_instant (les: list exp) (vs: list value) :=
       Forall2 sem_exp_instant les vs.
@@ -451,9 +442,9 @@ environment.
             discriminate
         | _ => auto
         end.
-      - (* Econst *)
+      * (* Econst *)
         do 2 inversion_clear 1; destruct base; congruence.
-      - (* Ewhen *)
+      * (* Ewhen *)
         intros v1 v2 Hsem1 Hsem2.
         inversion Hsem1; inversion Hsem2; subst;
           repeat progress match goal with
@@ -463,8 +454,8 @@ environment.
                           | H1:sem_var_instant ?R ?i ?v1,
                                H2:sem_var_instant ?R ?i ?v2 |- _ =>
                             apply sem_var_instant_det with (1:=H1) in H2
-                          | H1:sem_unop _ _ _ = Some ?v1,
-                               H2:sem_unop _ _ _ = Some ?v2 |- _ =>
+                          | H1:sem_op _ _ _ = Some ?v1,
+                               H2:sem_op _ _ _ = Some ?v2 |- _ =>
                             rewrite H1 in H2; injection H2; intro; subst
                           | Hp:present _ = present _ |- _ =>
                             injection Hp; intro; subst
@@ -473,31 +464,36 @@ environment.
                             rewrite H2 in H1; exfalso; injection H1;
                               now apply Bool.no_fixpoint_negb
                           end; subst; try easy.
-      - (* Eunop *)
+      * (* Eop *)
         intros v1 v2 Hsem1 Hsem2.
         inversion_clear Hsem1; inversion_clear Hsem2;
           repeat progress match goal with
-                          | H1:sem_exp_instant _ _ e _, H2:sem_exp_instant _ _ e _ |- _ =>
-                            apply IHe with (1:=H1) in H2; inversion H2; subst
-                          | H1:sem_unop _ _ _ = _, H2:sem_unop _ _ _ = _ |- _ =>
-                            rewrite H1 in H2; injection H2; intro; subst
-                          | H1:sem_exp_instant _ _ _ (present _),
-                               H2:sem_exp_instant _ _ _ absent |- _ =>
-                            apply IHe with (1:=H1) in H2
-                          end; try easy.
-      - (* Ebinop *)
-        intros v1 v2 Hsem1 Hsem2.
-        inversion_clear Hsem1; inversion_clear Hsem2;
-          repeat progress match goal with
-                          | H1:sem_exp_instant _ _ e1 _, H2:sem_exp_instant _ _ e1 _ |- _ =>
-                            apply IHe1 with (1:=H1) in H2
-                          | H1:sem_exp_instant _ _ e2 _, H2:sem_exp_instant _ _ e2 _ |- _ =>
-                            apply IHe2 with (1:=H1) in H2
-                          | H1:sem_binop _ _ _ _ _ = Some ?v1,
-                               H2:sem_binop _ _ _ _ _ = Some ?v2 |- _ =>
-                            rewrite H1 in H2; injection H2; intro; subst
-                          | H:present _ = present _ |- _ => injection H; intro; subst
-                          end; subst; try easy.
+                            | H : Forall _ (_ :: _) |- _ => inv H
+                            | H : Forall2 _ (_ :: _) (_ :: _) |- _ => inv H
+                            | H : Forall2 _ (_ :: _) (map _ ?x) |- _ => destruct x; simpl in H; inv H
+                            | H : ?el <> nil |- _ => destruct el; [now elim H | clear H]
+                            | H1 : sem_exp_instant _ _ _ _,
+                              H2 : sem_exp_instant _ _ _ _,
+                              H3 : forall _ _, _ -> _ -> _ |- _ =>
+                                specialize (H3 _ _ H1 H2); try discriminate; auto
+                          end; try congruence; [].
+        cut (cl0 = cl); try (intro; subst; congruence); [].
+        do 2 (take (Forall2 _ _ _) and rewrite <- Forall2_forall in it).
+        clear dependent op. revert dependent cl0. revert dependent cl.
+        induction el as [| x el]; intros cl1 [Hall1 Hlen1] cl2 [Hall2 Hlen2].
+        + simpl in Hlen1, Hlen2. rewrite map_length in Hlen1, Hlen2.
+          symmetry in Hlen1, Hlen2. rewrite length_zero_iff_nil in Hlen1, Hlen2. congruence.
+        + destruct cl1 as [| val1 cl1], cl2 as [| val2 cl2];
+          simpl in Hlen1, Hlen2; try discriminate; []. f_equal.
+          - cut (present val1 = present val2); try (now intro Heq; inv Heq); [].
+            take (Forall _ (_ :: _)) and inv it.
+            take (forall v1 v2 : value, _ -> _ -> v1 = v2) and apply it.
+            -- eapply (Hall1 x (present val1)); simpl; auto with arith.
+            -- eapply (Hall2 x (present val2)); simpl; auto with arith.
+          - apply IHel; auto.
+            -- intros. now take (Forall _ (_ :: _)) and inv it.
+            -- split; try congruence; []. intros. eapply Hall1. now right.
+            -- split; try congruence; []. intros. eapply Hall2. now right.
     Qed.
 
     Lemma sem_aexp_instant_det:

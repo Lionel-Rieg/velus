@@ -279,36 +279,42 @@ Module Type NLCOINDTOINDEXED
         CoInd.sem_exp H b e es ->
         CESem.sem_exp (tr_Stream b) (tr_History H) e (tr_Stream es).
     Proof.
-      unfold tr_Stream.
-      induction 1 as [? ? ? ? Hconst
-                            |? ? ? ? ? Hvar
-                            |? ? ? ? ? ? ? ? ? ? Hvar Hwhen
-                            |? ? ? ? ? ? ? ? ? Hlift1
-                            |? ? ? ? ? ? ? ? ? ? ? ? ? Hlift2]; intro n.
-      - rewrite const_spec in Hconst; rewrite Hconst.
-        destruct (tr_Stream b n); eauto.
-      - apply sem_var_impl in Hvar; eauto.
-      - specialize (IHsem_exp n).
-        apply sem_var_impl in Hvar;
-          unfold tr_Stream, CESem.sem_var, CESem.lift in Hvar.
-        specialize (Hvar n); simpl in *.
-        rewrite when_spec in Hwhen.
-        destruct (Hwhen n)
-          as [(Hes & Hxs & Hos)
-             |[(? & ? & Hes & Hxs & ? & Hos)
-              |(? & ? & Hes & Hxs & ? & Hos)]];
-          rewrite Hos; rewrite Hes in IHsem_exp; rewrite Hxs in Hvar;
-            eauto.
-        rewrite <-(Bool.negb_involutive k); eauto.
-      - specialize (IHsem_exp n); simpl in IHsem_exp.
-        rewrite lift1_spec in Hlift1; destruct (Hlift1 n)
-          as [(Hes & Hos)|(? & ? & Hes & ? & Hos)];
-          rewrite Hos; rewrite Hes in IHsem_exp; eauto.
-      - specialize (IHsem_exp1 n); specialize (IHsem_exp2 n); simpl in *.
-        rewrite lift2_spec in Hlift2; destruct (Hlift2 n)
-          as [(Hes1 & Hes2 & Hos)|(? & ? & ? & Hes1 & Hes2 & ? & Hos)];
-          rewrite Hos; rewrite Hes1 in IHsem_exp1; rewrite Hes2 in IHsem_exp2;
-            eauto.
+    unfold tr_Stream.
+    intros H b e. induction e; intros es Hsem n;
+    inversion_clear Hsem as [ ? ? ? ? Hconst
+                            | ? ? ? ? ? Hvar
+                            | ? ? ? ? ? es' v' ? Hes' Hvar Hwhen
+                            | ? ? ? ? ? ? ? ? Hall Hlift ].
+    + rewrite const_spec in *. rewrite Hconst.
+      destruct (tr_Stream b n); eauto.
+    + apply sem_var_impl in Hvar; eauto.
+    + specialize (IHe es' Hes' n).
+      apply sem_var_impl in Hvar;
+        unfold tr_Stream, CESem.sem_var, CESem.lift in Hvar.
+      specialize (Hvar n); simpl in *.
+      rewrite when_spec in Hwhen.
+      destruct (Hwhen n)
+        as [(Hes & Hxs & Hos)
+           |[(? & ? & Hes & Hxs & ? & Hos)
+            |(? & ? & Hes & Hxs & ? & Hos)]];
+        rewrite Hos; rewrite Hes in IHe; rewrite Hxs in Hvar;
+          eauto.
+      rewrite <- (Bool.negb_involutive b0); eauto.
+    + assert (Hsem : Forall2
+                 (fun e s => CESem.sem_exp (fun n => b # n) (tr_History H) e (fun n => s # n))
+                 el els).
+      { rewrite Forall_forall in IHe.
+        now eapply (Forall2_impl_In _ _ el els (fun e s He _ => IHe e He s)) in Hall. }
+      rewrite lift_spec in Hlift; destruct (Hlift n) as [[Hes Hos] | [? [? [Hes [? Hos]]]]];
+      rewrite Hos; clear Hlift.
+      - constructor; trivial; []. rewrite Forall_forall. intros e He. clear IHe.
+        destruct(Forall2_in_left _ _ _ _ Hsem He) as [s [Hin Hs]].
+        specialize (Hs n). simpl in Hs.
+        cut (s # n = absent); try (now intro Heq; rewrite <- Heq); [].
+        edestruct (In_nth _ _ (Streams.const absent) Hin) as [k [Hlt Hk]].
+        subst s. rewrite Forall_forall in Hes. apply Hes, nth_In, Hlt.
+      - econstructor; eauto; []. rewrite <- Hes, Forall2_map_2.
+        revert Hsem. apply Forall2_impl_In. auto.
     Qed.
     Hint Resolve sem_exp_impl : core.
 

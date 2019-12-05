@@ -51,15 +51,10 @@ Module Type CETYPING
         In (x, bool_type) vars ->
         wt_exp e ->
         wt_exp (Ewhen e x b)
-    | wt_Eunop: forall op e ty,
-        type_unop op (typeof e) = Some ty ->
-        wt_exp e ->
-        wt_exp (Eunop op e ty)
-    | wt_Ebinop: forall op e1 e2 ty,
-        type_binop op (typeof e1) (typeof e2) = Some ty ->
-        wt_exp e1 ->
-        wt_exp e2 ->
-        wt_exp (Ebinop op e1 e2 ty).
+    | wt_Eop: forall op el ty,
+        type_op op (List.map typeof el) = Some ty ->
+        List.Forall wt_exp el ->
+        wt_exp (Eop op el ty).
 
     Fixpoint typeofc (ce: cexp): type :=
       match ce with
@@ -115,19 +110,21 @@ Module Type CETYPING
         auto.
   Qed.
 
+  Lemma wt_exp_Proper_aux :
+    Proper (@Permutation.Permutation (ident * type) ==> @eq exp ==> Basics.impl)
+           wt_exp.
+  Proof.
+  intros env' env Henv e' e He.
+  rewrite He; clear He.
+  induction e; inversion_clear 1; rewrite ?Henv in *; auto; [].
+  constructor; trivial; [].
+  rewrite Forall_forall in *. intros. rewrite <- IHe; auto.
+  Qed.
+
   Instance wt_exp_Proper:
     Proper (@Permutation.Permutation (ident * type) ==> @eq exp ==> iff)
            wt_exp.
-  Proof.
-    intros env' env Henv e' e He.
-    rewrite He; clear He.
-    induction e; try destruct IHe;
-      try destruct IHe1, IHe2;
-      split; auto;
-        inversion_clear 1;
-        (rewrite Henv in * || rewrite <-Henv in * || idtac);
-        auto.
-  Qed.
+  Proof. repeat intro. split; apply wt_exp_Proper_aux; auto; now symmetry. Qed.
 
   Instance wt_exp_pointwise_Proper:
     Proper (@Permutation.Permutation (ident * type)

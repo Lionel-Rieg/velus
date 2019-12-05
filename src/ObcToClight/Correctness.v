@@ -409,38 +409,42 @@ Section PRESERVATION.
           exp_eval me ve ex (Some v) ->
           eval_expr tge e le m (translate_exp owner caller ex) v.
       Proof.
-        induction ex as [x| |cst|op| |x]; intros * WTex Ev; inv Ev; inv WTex; simpl.
-
-        (* Var x ty : "x" *)
-        - eapply eval_var; eauto.
-
-        (* State x ty : "self->x" *)
-        - eapply eval_self_field; eauto.
-
-        (* Const c ty : "c" *)
-        - destruct cst; constructor.
-
-        (* Unop op e ty : "op e" *)
-        - destruct op; simpl in *; econstructor; eauto;
-            apply match_states_conj in Hmem as (?&?&?&?); rewrite type_pres.
-          + erewrite sem_unary_operation_any_mem; eauto.
+      induction ex as [x | | cst | op | x]; intros * WTex Ev; inv Ev; inv WTex; simpl.
+      * (* Var x ty : "x" *)
+        eapply eval_var; eauto.
+      * (* State x ty : "self->x" *)
+        eapply eval_self_field; eauto.
+      * (* Const c ty : "c" *)
+        destruct cst; constructor.
+      * (* Op op el tyl : "op el tyl" *)
+        destruct op as [unop | binop].
+        + (* Unary: unop e ty : "op e" *)
+          destruct el as [| ? [| ? ?]]; simpl in *; try discriminate; [].
+          repeat (take (Forall _ _) and inversion_clear it).
+          destruct cl as [| ? [| ? ?]]; simpl in *;
+          repeat take (Forall2 _ _ _) and inversion_clear it.
+          destruct unop; simpl in *; econstructor; eauto;
+          apply match_states_conj in Hmem as (?&?&?&?); rewrite type_pres.
+          - erewrite sem_unary_operation_any_mem; eauto.
             eapply wt_val_not_vundef_nor_vptr; eauto.
-          + match goal with
+          - match goal with
               H: match Ctyping.check_cast ?x ?y with _ => _ end = _ |- _ =>
               destruct (Ctyping.check_cast x y); inv H
             end.
             erewrite sem_cast_any_mem; eauto.
             eapply wt_val_not_vundef_nor_vptr; eauto.
-
-        (* Binop op e1 e2 : "e1 op e2" *)
-        - simpl in *. unfold translate_binop.
+        + (* Binop op e1 e2 : "e1 op e2" *)
+          destruct el as [| ? [| ? [| ? ?]]]; simpl in *; try discriminate; [].
+          repeat (take (Forall _ _) and inversion_clear it).
+          destruct cl as [| ? [| ? [| ? ?]]]; simpl in *;
+          repeat take (Forall2 _ _ _) and inversion_clear it.
+          simpl in *. unfold translate_binop.
           econstructor; eauto.
           apply match_states_conj in Hmem as (?&?&?&?); rewrite 2 type_pres.
           erewrite sem_binary_operation_any_cenv_mem; eauto;
             eapply wt_val_not_vundef_nor_vptr; eauto.
-
-        (* Valid x ty *)
-        - eapply eval_var; eauto.
+      * (* Valid x ty *)
+        eapply eval_var; eauto.
       Qed.
 
       Corollary exprs_correct:

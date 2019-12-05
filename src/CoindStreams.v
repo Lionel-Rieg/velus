@@ -40,6 +40,44 @@ Module Type COINDSTREAMS
     induction n; simpl; auto.
   Qed.
 
+  Fact Str_nth_0:
+    forall {A} (xs: Stream A) x,
+      (x ⋅ xs) # 0 = x.
+  Proof. reflexivity. Qed.
+
+  Lemma Str_nth_S {A} : forall (s : Streams.Stream A) n,
+    s # (S n) = (Streams.tl s) # n.
+  Proof. reflexivity. Qed.
+
+  Section ForallStr.
+    Context {A: Type}.
+    Variable P: A -> Prop.
+    CoInductive Forall_Str: Stream A -> Prop :=
+      Always:
+        forall x xs,
+          P x ->
+          Forall_Str xs ->
+          Forall_Str (x ⋅ xs).
+
+    Lemma Forall_Str_nth:
+      forall s,
+        Forall_Str s <-> (forall n, P (s # n)).
+    Proof.
+      split.
+      - intros H n.
+        revert dependent s; induction n; intros.
+        + inv H; rewrite Str_nth_0; auto.
+        + destruct s; rewrite Str_nth_S.
+          inv H; auto.
+      - revert s; cofix CoFix; intros * H.
+      destruct s.
+      constructor.
+        + specialize (H 0); rewrite Str_nth_0 in H; auto.
+        + apply CoFix.
+          intro n; specialize (H (S n)); rewrite Str_nth_S in H; auto.
+    Qed.
+  End ForallStr.
+
   Ltac unfold_Stv xs :=
     rewrite (unfold_Stream xs);
     destruct xs as [[|]];
@@ -212,7 +250,7 @@ Module Type COINDSTREAMS
   Add Parametric Morphism
       A B
     : (@List.map (Stream A) (Stream B))
-      with signature (fun (f f': Stream A -> Stream B) => forall xs xs', xs ≡ xs' -> f xs ≡ f' xs') ==> @EqSts A ==> @EqSts B
+      with signature (@EqSt A ==> @EqSt B) ==> @EqSts A ==> @EqSts B
         as map_st_EqSt.
   Proof.
     intros f f' Ef xs xs' Exs.
@@ -224,7 +262,7 @@ Module Type COINDSTREAMS
   Add Parametric Morphism
       A B
     : (@List.map (Stream A) B)
-      with signature (fun (f f': Stream A -> B) => forall xs xs', xs ≡ xs' -> f xs = f' xs') ==> @EqSts A ==> eq
+      with signature (@EqSt A ==> eq) ==> @EqSts A ==> eq
         as map_EqSt.
   Proof.
     intros f f' Ef xs xs' Exs.
@@ -252,29 +290,21 @@ Module Type COINDSTREAMS
   CoFixpoint const (b: Stream bool) (c: const): Stream value :=
     (if hd b then present (sem_const c) else absent) ⋅ const (tl b) c.
 
-  CoInductive lift1 (op: unop) (ty: type)
-    : Stream value -> Stream value -> Prop :=
-  | Lift1A:
-      forall xs rs,
-        lift1 op ty xs rs ->
-        lift1 op ty (absent ⋅ xs) (absent ⋅ rs)
-  | Lift1P:
-      forall x r xs rs,
-        sem_unop op x ty = Some r ->
-        lift1 op ty xs rs ->
-        lift1 op ty (present x ⋅ xs) (present r ⋅ rs).
-
-  CoInductive lift2 (op: binop) (ty1 ty2: type)
-    : Stream value -> Stream value -> Stream value -> Prop :=
-  | Lift2A:
-      forall xs ys rs,
-        lift2 op ty1 ty2 xs ys rs ->
-        lift2 op ty1 ty2 (absent ⋅ xs) (absent ⋅ ys) (absent ⋅ rs)
-  | Lift2P:
-      forall x y r xs ys rs,
-        sem_binop op x ty1 y ty2 = Some r ->
-        lift2 op ty1 ty2 xs ys rs ->
-        lift2 op ty1 ty2 (present x ⋅ xs) (present y ⋅ ys) (present r ⋅ rs).
+  CoInductive lift (op: operator) (tys : list type)
+    : list (Stream value) -> Stream value -> Prop :=
+  | LiftA:
+      forall xls rs,
+        Forall (fun s => Streams.hd s = absent) xls -> (* should we add length xls = length tys? *)
+        Streams.hd rs = absent ->
+        lift op tys (List.map (@Streams.tl _) xls) (Streams.tl rs) ->
+        lift op tys xls rs
+  | LiftP:
+      forall xl xls r rs,
+        omap (fun s => value_to_option (Streams.hd s)) xls = Some xl ->
+        sem_op op (List.combine xl tys) = Some r ->
+        Streams.hd rs = present r ->
+        lift op tys (List.map (@Streams.tl _) xls) (Streams.tl rs) ->
+        lift op tys xls rs.
 
   CoInductive when (b: bool)
     : Stream value -> Stream value -> Stream value -> Prop :=
@@ -416,16 +446,6 @@ Module Type COINDSTREAMS
         on the converse.
    *)
 
-  Fact Str_nth_0:
-    forall {A} (xs: Stream A) x,
-      (x ⋅ xs) # 0 = x.
-  Proof. reflexivity. Qed.
-
-  Fact Str_nth_S:
-    forall {A} (xs: Stream A) x n,
-      (x ⋅ xs) # (S n) = xs # n.
-  Proof. reflexivity. Qed.
-
   Lemma const_spec:
     forall xs c b,
       xs ≡ const b c <->
@@ -496,67 +516,52 @@ Module Type COINDSTREAMS
         cofix_step CoFix H.
   Qed.
 
-  Lemma lift1_spec:
-    forall op t xs ys,
-      lift1 op t xs ys <->
+  Lemma lift_tl : forall op tys xls rs,
+    lift op tys xls rs -> lift op tys (List.map (tl (A:=value)) xls) (tl rs).
+  Proof. intros op tys xls rs Hop. now inv Hop. Qed.
+
+  Lemma lift_spec:
+    forall op tyl xls ys,
+      lift op tyl xls ys <->
       (forall n,
-          (xs # n = absent /\ ys # n = absent)
+          (Forall (fun s => s # n = absent) xls /\ ys # n = absent)
           \/
-          (exists x y,
-              xs # n = present x
-              /\ sem_unop op x t = Some y
+          (exists xl y,
+              List.map (Str_nth n) xls = List.map present xl
+              /\ sem_op op (List.combine xl tyl) = Some y
               /\ ys # n = present y)).
   Proof.
     split.
-    - intros H n; revert dependent xs; revert ys t op.
-      induction n; intros.
-      + inv H; intuition.
-        right. do 2 eexists; intuition; auto.
-      + inv H; repeat rewrite Str_nth_S;auto.
-    - revert xs ys t op.
-      cofix CoFix; intros * H.
-      unfold_Stv xs; unfold_Stv ys;
-        try (specialize (H 0); repeat rewrite Str_nth_0 in H;
-             destruct H as [(?&?)|(?&?&?&?&?)]; discriminate).
-      + constructor; cofix_step CoFix H.
-      + constructor.
-        * destruct (H 0) as [(?&?)|(?&?& E &?& E')]; try discriminate.
-          rewrite Str_nth_0 in E, E'.
-          inv E; inv E'; auto.
-        * cofix_step CoFix H.
-  Qed.
-
-  Lemma lift2_spec:
-    forall op t1 t2 xs ys zs,
-      lift2 op t1 t2 xs ys zs <->
-      (forall n,
-          (xs # n = absent
-           /\ ys # n = absent
-           /\ zs # n = absent)
-          \/
-          (exists x y z,
-              xs # n = present x
-              /\ ys # n = present y
-              /\ sem_binop op x t1 y t2 = Some z
-              /\ zs # n = present z)).
-  Proof.
-    split.
-    - intros H n; revert dependent xs; revert ys zs t1 t2 op.
-      induction n; intros.
-      + inv H; intuition.
-        right. do 3 eexists; intuition; auto.
-      + inv H; repeat rewrite Str_nth_S; auto.
-    - revert xs ys zs t1 t2 op.
-      cofix CoFix; intros * H.
-      unfold_Stv xs; unfold_Stv ys; unfold_Stv zs;
-        try (specialize (H 0); repeat rewrite Str_nth_0 in H;
-             destruct H as [(?&?&?)|(?&?&?&?&?&?&?)]; discriminate).
-      + constructor; cofix_step CoFix H.
-      + constructor.
-        * destruct (H 0) as [(?&?&?)|(?&?&?& E & E' &?& E'')]; try discriminate.
-          rewrite Str_nth_0 in E, E', E''.
-          inv E; inv E'; inv E''; auto.
-        * cofix_step CoFix H.
+    - intros H n; revert dependent xls; revert ys tyl op.
+      induction n; intros * Hlift.
+      + inv Hlift; intuition; [].
+        right. do 2 eexists; repeat split; eauto; [].
+        rewrite omap_Some in *. unfold Str_nth. simpl.
+        rewrite <- Forall2_eq, Forall2_map_1, Forall2_map_2.
+        take (Forall2 _ _ _) and revert it. apply Forall2_impl_In.
+        intros [[| e] s] **; simpl in *; congruence.
+      + apply lift_tl in Hlift. apply IHn in Hlift.
+        destruct ys as [y ys]. rewrite Str_nth_S. simpl in Hlift.
+        destruct Hlift as [[Hxls Hys] | [xl [e [Hxls [Hop Hys]]]]].
+        * left. split; trivial; [].
+          rewrite Forall_map in Hxls. revert Hxls. apply Forall_impl_In.
+          intros [] **. simpl in *. now rewrite Str_nth_S.
+        * right. exists xl, e. rewrite <- Hxls. repeat split; trivial; [].
+          rewrite map_map. apply map_ext. intros []. simpl in *. now rewrite Str_nth_S.
+    - revert xls ys tyl op.
+      cofix CoFix; intros * Hlift.
+      destruct (Hlift 0) as [[Hxls Hys] | [xl [y [Hxls [Hop Hys]]]]].
+      + left; trivial; []. clear Hxls Hys. cofix_step CoFix Hlift.
+        rewrite Forall_map, map_map. setoid_rewrite Str_nth_S in Hlift.
+        apply Hlift.
+      + eright; eauto.
+        * rewrite omap_Some.
+          rewrite <- Forall2_eq, Forall2_map_1, Forall2_map_2 in Hxls.
+          revert Hxls. apply Forall2_impl_In. unfold Str_nth. simpl.
+          intros * ? ? Hpres. now rewrite Hpres.
+        * clear Hxls Hys. cofix_step CoFix Hlift.
+          rewrite Forall_map, map_map. setoid_rewrite Str_nth_S in Hlift.
+          apply Hlift.
   Qed.
 
   (** ** cexp level synchronous operators specifications *)

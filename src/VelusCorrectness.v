@@ -314,9 +314,9 @@ Qed.
 
 Lemma value_to_option_pstr:
   forall xs,
-    (fun n => map Stc2ObcCorr.value_to_option (pstr xs n)) ≈ (fun n => map Some (xs n)).
+    (fun n => map value_to_option (pstr xs n)) ≈ (fun n => map Some (xs n)).
 Proof.
-  intros; unfold Stc2ObcCorr.value_to_option, pstr; intro.
+  intros; unfold value_to_option, pstr; intro.
   rewrite map_map; auto.
 Qed.
 

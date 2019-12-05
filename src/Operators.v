@@ -21,6 +21,35 @@ Module Type OPERATORS.
   Parameter type : Type.
   Parameter const : Type.
 
+  (* All types must be inhabited by a constant. *)
+  Parameter init_type  : type -> const.
+
+  Parameter type_const : const -> type.
+  Parameter sem_const : const -> val.
+
+  (* Operations *)
+
+  (* Operators are function constants: unary, binary, and more *)
+  Parameter operator  : Type.
+  Parameter sem_op  : operator -> list (val * type) -> option val.
+
+  (* Typing *)
+
+  Parameter type_op  : operator -> list type -> option type.
+  Parameter wt_val : val -> type -> Prop.
+
+  Axiom wt_val_const : forall c,  wt_val (sem_const c) (type_const c).
+
+  Axiom pres_sem_op:
+    forall op tys ty vs v,
+      type_op op tys = Some ty ->
+      sem_op op (List.combine vs tys) = Some v ->
+      List.Forall2 wt_val vs tys ->
+      wt_val v ty.
+
+  Axiom type_init_type : forall ty, type_const (init_type ty) = ty.
+  Axiom wt_init_type : forall ty, wt_val (sem_const (init_type ty)) ty.
+
   (* Booleans *)
 
   Parameter true_val  : val.
@@ -29,57 +58,16 @@ Module Type OPERATORS.
 
   Parameter bool_type : type.
 
-  (* Constants *)
-
-  Parameter type_const : const -> type.
-  Parameter sem_const  : const -> val.
-  Parameter init_type  : type -> const.
-
-  (* Operations *)
-
-  Parameter unop  : Type.
-  Parameter binop : Type.
-
-  Parameter sem_unop  : unop -> val -> type -> option val.
-  Parameter sem_binop : binop -> val -> type -> val -> type -> option val.
-
-  (* Typing *)
-
-  Parameter type_unop  : unop -> type -> option type.
-  Parameter type_binop : binop -> type -> type -> option type.
-
-  Parameter wt_val : val -> type -> Prop.
-
+  (* Booleans only contain true and false *)
   Axiom wt_val_bool :
     forall v, (v = true_val \/ v = false_val) <-> wt_val v bool_type.
 
-  Axiom wt_val_const : forall c, wt_val (sem_const c) (type_const c).
-
-  Axiom wt_init_type : forall ty, wt_val (sem_const (init_type ty)) ty.
-  Axiom type_init_type : forall ty, type_const (init_type ty) = ty.
-
-  Axiom pres_sem_unop:
-    forall op ty1 ty v1 v,
-      type_unop op ty1 = Some ty ->
-      sem_unop op v1 ty1 = Some v ->
-      wt_val v1 ty1 ->
-      wt_val v ty.
-
-  Axiom pres_sem_binop:
-    forall op ty1 ty2 ty v1 v2 v,
-      type_binop op ty1 ty2 = Some ty ->
-      sem_binop op v1 ty1 v2 ty2 = Some v ->
-      wt_val v1 ty1 ->
-      wt_val v2 ty2 ->
-      wt_val v ty.
-
   (* Decidability of elements *)
 
-  Axiom val_dec   : forall v1  v2  : val,    {v1 = v2}  +  {v1 <> v2}.
-  Axiom type_dec  : forall t1  t2  : type,   {t1 = t2}  +  {t1 <> t2}.
-  Axiom const_dec : forall c1  c2  : const,  {c1 = c2}  +  {c1 <> c2}.
-  Axiom unop_dec  : forall op1 op2 : unop,  {op1 = op2} + {op1 <> op2}.
-  Axiom binop_dec : forall op1 op2 : binop, {op1 = op2} + {op1 <> op2}.
+  Axiom val_dec   : forall v1  v2  : val,       {v1 = v2}   +  {v1 <> v2}.
+  Axiom type_dec  : forall t1  t2  : type,      {t1 = t2}   +  {t1 <> t2}.
+  Axiom const_dec : forall c1  c2  : const,     {c1 = c2}   +  {c1 <> c2}.
+  Axiom op_dec    : forall op1 op2 : operator,  {op1 = op2} +  {op1 <> op2}.
 
 End OPERATORS.
 
@@ -88,11 +76,10 @@ From Coq Require Export Classes.EquivDec.
 Module Type OPERATORS_AUX (Import Ops : OPERATORS).
   Close Scope equiv_scope.
 
-  Instance: EqDec val   eq := { equiv_dec := val_dec   }.
-  Instance: EqDec type  eq := { equiv_dec := type_dec  }.
-  Instance: EqDec const eq := { equiv_dec := const_dec }.
-  Instance: EqDec unop  eq := { equiv_dec := unop_dec  }.
-  Instance: EqDec binop eq := { equiv_dec := binop_dec }.
+  Instance: EqDec val      eq := { equiv_dec := val_dec   }.
+  Instance: EqDec type     eq := { equiv_dec := type_dec  }.
+  Instance: EqDec const    eq := { equiv_dec := const_dec }.
+  Instance: EqDec operator eq := { equiv_dec := op_dec    }.
 
   Lemma wt_val_true:
     wt_val true_val bool_type.
@@ -180,6 +167,12 @@ Module Type OPERATORS_AUX (Import Ops : OPERATORS).
   Definition value_dec (v1 v2: value) : {v1 = v2} + {v1 <> v2}.
     decide equality. apply val_dec.
   Defined.
+
+  Definition value_to_option (v: value) : option val :=
+    match v with
+    | absent => None
+    | present c => Some c
+    end.
 
   Definition value_to_bool (v: value) : option bool :=
     match v with

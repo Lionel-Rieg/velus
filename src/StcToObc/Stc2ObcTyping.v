@@ -88,10 +88,13 @@ Module Type STC2OBCTYPING
         CE.Typ.wt_exp nvars e ->
         wt_exp mems vars (translate_exp memset e).
     Proof.
-      induction e; simpl; intro WTle; inv WTle; auto using wt_exp.
-      - FromMemset; eauto using wt_exp.
-      - constructor; auto; now rewrite typeof_correct.
-      - constructor; auto; now rewrite 2 typeof_correct.
+    induction e; simpl; intro WTle; inv WTle; auto using wt_exp.
+    + FromMemset; eauto using wt_exp.
+    + constructor; auto.
+      - take (type_op _ _ = _ ) and rewrite <- it.
+        f_equal. rewrite map_map. apply map_ext. now setoid_rewrite typeof_correct.
+      - rewrite Forall_map. take (Forall (CE.Typ.wt_exp nvars) el) and revert it.
+        apply Forall_impl_In. now rewrite Forall_forall in IHe.
     Qed.
     Hint Resolve translate_exp_wt : core.
 

@@ -30,21 +30,64 @@ Module Type OBCSYNTAX
        (Import Op : OPERATORS)
        (Import OpAux : OPERATORS_AUX Op).
 
+  (* We do not want the too weak Coq generated induction principles *)
+  Unset Elimination Schemes.
+
   Inductive exp : Type :=
-  | Var   : ident -> type -> exp                (* variable  *)
-  | State : ident -> type -> exp                (* state variable  *)
-  | Const : const-> exp                         (* constant *)
-  | Unop  : unop -> exp -> type -> exp          (* unary operator *)
-  | Binop : binop -> exp -> exp -> type -> exp  (* binary operator *)
-  | Valid : ident -> type -> exp.                         (* valid value assertion *)
+  | Var   : ident -> type -> exp                 (* variable  *)
+  | State : ident -> type -> exp                 (* state variable  *)
+  | Const : const -> exp                         (* constant *)
+  | Op    : operator -> list exp -> type -> exp  (* operators: unary, binary, and more *)
+  | Valid : ident -> type -> exp.                (* valid value assertion *)
+
+  (* Back to normal *)
+  Set Elimination Schemes.
+
+  (* Let us define our own induction and recursion principles.
+     For that, we need an informative version of [List.Forall]. *)
+
+  Inductive Forall_t {A : Type} (P : A -> Type) : list A -> Type :=
+      Forall_t_nil : Forall_t P []
+    | Forall_t_cons : forall (x : A) (l : list A), P x -> Forall_t P l -> Forall_t P (x :: l).
+
+  Definition exp_rect := fun (P : exp -> Type)
+    (f_var   : forall id ty, P (Var id ty))
+    (f_state : forall id ty, P (State id ty))
+    (f_const : forall c,     P (Const c))
+    (f_op    : forall op el, Forall_t P el -> forall ty, P (Op op el ty))
+    (f_valid : forall id ty, P (Valid id ty)) =>
+  fix F (e : exp) : P e :=
+    match e as e return (P e) with
+    | Var   id ty => f_var   id ty
+    | State id ty => f_state id ty
+    | Const c     => f_const c
+    | Op op el ty => f_op op el (list_rect (Forall_t P) (Forall_t_nil P)
+                                  (fun e el IHel => Forall_t_cons P e el (F e) IHel) el) ty
+    | Valid id ty => f_valid id ty
+    end.
+
+  Definition exp_ind := fun (P : exp -> Prop)
+    (f_var   : forall id ty, P (Var id ty))
+    (f_state : forall id ty, P (State id ty))
+    (f_const : forall c,     P (Const c))
+    (f_op    : forall op el, Forall P el -> forall ty, P (Op op el ty))
+    (f_valid : forall id ty, P (Valid id ty)) =>
+  fix F (e : exp) : P e :=
+    match e as e return (P e) with
+    | Var   id ty => f_var   id ty
+    | State id ty => f_state id ty
+    | Const c     => f_const c
+    | Op op el ty => f_op op el (list_ind (List.Forall P) (List.Forall_nil P)
+                                  (fun e el IHel => List.Forall_cons e (F e) IHel) el) ty
+    | Valid id ty => f_valid id ty
+    end.
 
   Fixpoint typeof (e: exp): type :=
     match e with
     | Const c => type_const c
     | Var _ ty
     | State _ ty
-    | Unop _ _ ty
-    | Binop _ _ _ ty
+    | Op _ _ ty
     | Valid _ ty => ty
     end.
 
@@ -376,29 +419,16 @@ Module Type OBCSYNTAX
       Is_free_in_exp i (Var i ty)
   | FreeState: forall i ty,
       Is_free_in_exp i (State i ty)
-  | FreeUnop: forall i op e ty,
-      Is_free_in_exp i e ->
-      Is_free_in_exp i (Unop op e ty)
-  | FreeBinop: forall i op e1 e2 ty,
-      Is_free_in_exp i e1 \/ Is_free_in_exp i e2 ->
-      Is_free_in_exp i (Binop op e1 e2 ty)
+  | FreeOp: forall i op e ty,
+      List.Exists (Is_free_in_exp i) e ->
+      Is_free_in_exp i (Op op e ty)
   | FreeValid: forall i t,
       Is_free_in_exp i (Valid i t).
 
-  Lemma not_free_aux1 : forall i op e ty,
-      ~Is_free_in_exp i (Unop op e ty) ->
-      ~Is_free_in_exp i e.
-  Proof.
-    auto using Is_free_in_exp.
-  Qed.
-
-  Lemma not_free_aux2 : forall i op e1 e2 ty,
-      ~Is_free_in_exp i (Binop op e1 e2 ty) ->
-      ~Is_free_in_exp i e1 /\ ~Is_free_in_exp i e2.
-  Proof.
-    intros i op e1 e2 ty Hfree; split; intro H; apply Hfree;
-      constructor; [now left | now right].
-  Qed.
+  Lemma not_free_aux : forall i op el ty,
+      ~Is_free_in_exp i (Op op el ty) ->
+      List.Forall (fun e => ~Is_free_in_exp i e) el.
+  Proof. intros. rewrite Forall_Exists_neg. auto using Is_free_in_exp. Qed.
 
   Ltac not_free :=
     lazymatch goal with
@@ -414,18 +444,37 @@ Module Type OBCSYNTAX
         let HH := fresh in
         assert (HH : i <> x) by (intro; subst; apply H; constructor);
         clear H; rename HH into H
-    | H : ~Is_free_in_exp ?x (Unop ?op ?e ?ty) |- _ =>
-        apply not_free_aux1 in H
-    | H : ~Is_free_in_exp ?x (Binop ?op ?e1 ?e2 ?ty) |- _ =>
-        destruct (not_free_aux2 x op e1 e2 ty H)
+    | H : ~Is_free_in_exp ?x (Op ?op ?e ?ty) |- _ =>
+        apply not_free_aux in H
     end.
 
   (** Misc. properties *)
 
+  Lemma exp_list_dec : forall el1 el2 : list exp,
+    Forall_t (fun e => forall e2 : exp, {e = e2} + {e <> e2}) el1 ->
+    {el1 = el2} + {el1 <> el2}.
+  Proof.
+  intros el1. induction el1 as [| e1 el1]; intros el2 Hel1.
+  * destruct el2; now left + right.
+  * destruct el2 as [| e2 el2]; try (now right); [].
+    inversion_clear Hel1 as [| ? ? He Hel1_rec].
+    destruct (He e2).
+    + destruct (IHel1 el2 Hel1_rec).
+      - now left; f_equal.
+      - now right; intro H; inv H.
+    + now right; intro H; inv H.
+  Qed.
+
   Lemma exp_dec : forall e1 e2 : exp, {e1 = e2} + {e1 <> e2}.
   Proof.
-    decide equality;
-    try apply equiv_dec.
+  induction e1 as [id1 ty1 | id1 ty1 | c1 | op1 el1 IHel1 ty1 | id1 ty1];
+  intros [id2 ty2 | id2 ty2 | c2 | op2 el2 ty2 | id2 ty2]; try (now right);
+  try (solve [ destruct (equiv_dec c1 c2); compute in *; subst; auto; right; intro H; now inv H
+             | destruct (equiv_dec id1 id2); [ destruct (equiv_dec ty1 ty2) |];
+               compute in *; subst; auto; right; intro H; now inv H ]); [].
+  destruct (equiv_dec op1 op2); [ destruct (equiv_dec ty1 ty2);
+  [ destruct (exp_list_dec el1 el2 IHel1) |] |];
+  (now left; f_equal) || right; intro H; inv H; unfold complement in *; intuition.
   Qed.
 
   Instance: EqDec exp eq := { equiv_dec := exp_dec }.

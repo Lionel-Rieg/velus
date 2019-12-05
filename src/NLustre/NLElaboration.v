@@ -365,17 +365,17 @@ Section ElabExpressions.
       let op := elab_unop aop in
       do (e', ck) <- elab_exp eck ae';
       do ty' <- find_type_unop loc op (typeof e');
-      OK (Eunop op e' ty', ck)
+      OK (Eop (Unary op) (e' :: nil) ty', ck)
     | CAST aty' [ae'] loc =>
       let ty' := elab_type aty' in
       do (e', ck) <- elab_exp eck ae';
-      OK (Eunop (CastOp ty') e' ty', ck)
+      OK (Eop (Unary (CastOp ty')) (e' :: nil) ty', ck)
     | BINARY aop [ae1] [ae2] loc =>
       let op := elab_binop aop in
       do (e1, ck1) <- elab_exp eck ae1;
       do (e2, ck2) <- elab_exp eck ae2;
       do ty' <- find_type_binop loc op (typeof e1) (typeof e2);
-      if ck1 ==b ck2 then OK (Ebinop op e1 e2 ty', ck1)
+      if ck1 ==b ck2 then OK (Eop (Binary op) (e1 :: e2 :: nil) ty', ck1)
       else Error (err_loc loc (MSG "badly clocked operator: "
                                    :: msg_of_clocks ck1 ck2))
     | _ => Error (err_loc (expression_loc ae) (msg "expression not normalized"))
@@ -698,10 +698,10 @@ Section ElabExpressions.
       wc_exp vars e ck.
   Proof.
     unfold add_whens. destruct (do_add_when_to_constants tt).
-    2:now inversion_clear 2; auto.
-    induction eck; intros c e ck WTC AW. now inv AW; auto.
-    inv AW. inv WTC. constructor; auto.
-    eapply IHeck; eauto.
+    + induction eck; intros c e ck WTC AW.
+      - inv AW. constructor.
+      - simpl in AW. inv AW. inv WTC. constructor; trivial; []. now eapply IHeck.
+    + now inversion_clear 2; auto.
   Qed.
 
   Lemma wt_elab_exp:
@@ -724,7 +724,7 @@ Section ElabExpressions.
       intro; subst.
       rewrite type_binop'_correct in He.
       constructor; eauto.
-    - now rewrite type_castop.
+    - cbn -[type_unop]. now rewrite type_castop.
     - eapply wt_add_whens; eauto.
     - apply assert_type_eq in EQ1; subst.
       constructor; eauto using find_var_type, wt_clock_find_var.
@@ -756,10 +756,11 @@ Section ElabExpressions.
              | H:find_var _ _ = OK _ |- _ =>
                apply find_var_clock in H
              end;
-          eauto using wc_exp, wc_add_whens.
-    take (forall eck e ck, wc_clock _ _ -> elab_exp _ _ = OK _ -> wc_exp _ _ _)
+          eauto using wc_exp, wc_add_whens; try discriminate.
+    + repeat constructor; eauto using wc_exp; discriminate.
+    + take (forall eck e ck, wc_clock _ _ -> elab_exp _ _ = OK _ -> wc_exp _ _ _)
          and apply it in EQ0; auto.
-    eauto using In_env_elements_wc_clock.
+      eauto using In_env_elements_wc_clock.
   Qed.
 
   Lemma wt_inst_clock_env:
@@ -989,19 +990,20 @@ Section ElabExpressions.
       elab_exps loc (inst_clock bck sub) iface aes = OK es ->
       Forall2 (fun '(x, (_, xck)) e =>
                  exists lck, wc_exp (idck (Env.elements env)) e lck
-                        /\ instck bck (fun x => Env.find x sub) xck = Some lck)
+                          /\ instck bck (fun x => Env.find x sub) xck = Some lck)
               iface es.
   Proof.
-    intros loc bck sub iface aes es WC; revert aes es.
-    induction iface as [|(y, (yt, yc)) iface IH].
-    now destruct aes; inversion 1; auto.
-    destruct aes as [|ae aes]; simpl. now inversion 1.
+  intros loc bck sub iface aes es WC; revert aes es.
+  induction iface as [|(y, (yt, yc)) iface IH].
+  + now destruct aes; inversion 1; auto.
+  + destruct aes as [|ae aes]; simpl; try (now inversion 1); [].
     intros * Helab; DestructCases; auto.
     monadInv Helab. NamedDestructCases. monadInv EQ3.
     assert (WCI:=EQ); apply wc_inst_clock in WCI; auto.
     apply inst_clock_instck in EQ.
     apply wc_elab_exp in EQ1; auto.
-    now rewrite equiv_decb_equiv in Heq; rewrite Heq in *; eauto.
+    rewrite equiv_decb_equiv in Heq; rewrite Heq in *.
+    constructor; eauto.
   Qed.
 
   Lemma check_result_list_wc:
@@ -1121,10 +1123,8 @@ Section ElabExpressions.
              | H:add_whens _ _ _ = _ |- _ => apply wc_add_whens with (1:=EE) in Heq
              | _ => NamedDestructCases; intros; subst
              end;
-      eauto using wc_cexp, wc_exp, wc_elab_exp.
-    - repeat constructor; auto.
-      apply wc_elab_exp in EQ0; eauto using In_env_elements_wc_clock.
-    - constructor; eauto using wc_clock, In_env_elements_wc_clock.
+      repeat constructor; try discriminate;
+      eauto using wc_cexp, wc_exp, wc_elab_exp, wc_clock, In_env_elements_wc_clock.
   Qed.
 
   Lemma check_result_list_Forall2:

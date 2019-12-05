@@ -58,12 +58,12 @@ Module Type STC2OBCINVARIANTS
     forall x mems e,
       Is_free_in_exp x (translate_exp mems e) -> CE.IsF.Is_free_in_exp x e.
   Proof.
-    induction e; simpl; intro H; auto.
-    - inversion H.
-    - now apply Is_free_in_tovar in H; subst.
-    - constructor; inversion H; auto.
-    - constructor; inversion_clear H as [| | |????? [?|?]|]; subst;
-        [left; auto | right; auto].
+    induction e; simpl; intro Hx; auto.
+    - inversion Hx.
+    - now apply Is_free_in_tovar in Hx; subst.
+    - constructor; inversion_clear Hx; auto. rewrite Exists_exists in *.
+      destruct H as [v [Hv Hfree]]. rewrite in_map_iff in Hv. destruct Hv as [e' [? He']]. subst.
+      exists e'. rewrite Forall_forall in *. auto.
   Qed.
 
   Lemma Fusible_translate_cexp:

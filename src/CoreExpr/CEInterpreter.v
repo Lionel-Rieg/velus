@@ -69,7 +69,8 @@ Module Type CEINTERPRETER
         end
       end.
 
-     Fixpoint interp_exp_instant (e: exp): value :=
+    Local Open Scope option_monad_scope.
+    Fixpoint interp_exp_instant (e: exp) : value :=
       match e with
       | Econst c =>
         if base then present (sem_const c) else absent
@@ -84,24 +85,12 @@ Module Type CEINTERPRETER
           end
         | _, _ => absent
         end
-      | Eunop op e _ =>
-        match interp_exp_instant e with
-        | present v =>
-          match sem_unop op v (typeof e) with
-          | Some v' => present v'
-          | None => absent
+      | Eop op el _ =>
+          match (do vl <- omap value_to_option (List.map interp_exp_instant el);
+                 sem_op op (List.combine vl (List.map typeof el))) with
+            | Some v' => present v'
+            | None => absent
           end
-        | absent => absent
-        end
-      | Ebinop op e1 e2 _ =>
-        match interp_exp_instant e1, interp_exp_instant e2 with
-        | present v1, present v2 =>
-          match sem_binop op v1 (typeof e1) v2 (typeof e2) with
-          | Some v => present v
-          | None => absent
-          end
-        | _, _ => absent
-        end
       end.
 
     Definition interp_exps_instant (les: list exp): list value :=
@@ -146,9 +135,7 @@ Module Type CEINTERPRETER
                erewrite <-(interp_var_instant_sound x v); eauto; simpl
              | H: val_to_bool ?x = _ |- context[val_to_bool ?x] =>
                rewrite H
-             | H: sem_unop ?op ?c ?t = _ |- context[sem_unop ?op ?c ?t] =>
-               rewrite H
-             | H: sem_binop ?op ?c1 ?t1 ?c2 ?t2 = _ |- context[sem_binop ?op ?c1 ?t1 ?c2 ?t2] =>
+             | H: sem_op ?op ?c ?t = _ |- context[sem_op ?op ?c ?t] =>
                rewrite H
           end.
 
@@ -175,12 +162,39 @@ Module Type CEINTERPRETER
         sem_exp_instant base R e v ->
         v = interp_exp_instant e.
     Proof.
-      induction 1; simpl;
-        try rewrite <-IHsem_exp_instant;
-        try rewrite <-IHsem_exp_instant1;
-        try rewrite <-IHsem_exp_instant2;
-        rw_exp_helper; auto;
-          destruct b; auto.
+    induction e; intros v Hsem; inv Hsem; simpl.
+    * reflexivity.
+    * now apply interp_var_instant_sound.
+    * rewrite <- (interp_var_instant_sound _ _ H2), <- (IHe _ H4), H5.
+      now destruct b.
+    * rewrite <- (interp_var_instant_sound _ _ H2), <- (IHe _ H5), H4.
+      now destruct b0.
+    * now rewrite <- (interp_var_instant_sound _ _ H3).
+    * match goal with H : Forall2 _ _ _, H' : sem_op op _ = _ |- _ =>
+        rename H into Hall, H' into Hsem end.
+      destruct (omap value_to_option (map interp_exp_instant el)) as [cl' |] eqn:Hmap; simpl.
+      + cut (cl' = cl); try (intro; subst; now rewrite Hsem); [].
+        clear Hsem. revert dependent cl'. revert dependent cl.
+        take (el <> []) and clear it.
+        induction el as [| e el]; intros.
+        - inversion Hall. destruct cl, cl'; simpl in *; trivial; discriminate.
+        - apply omap_Some in Hmap.
+          destruct cl as [| v cl], cl' as [| v' cl'];
+          trivial; simpl in *; try (now discriminate || inv Hall); [].
+          inversion_clear Hall. inversion_clear Hmap. inversion_clear IHe. f_equal.
+          -- take (sem_exp_instant _ _ _ _) and rename it into Hsem.
+             take (forall v : value, _ -> _) and apply it in Hsem.
+             rewrite <- Hsem in *. simpl in *. congruence.
+          -- apply IHel; auto; []. now rewrite omap_Some.
+      + exfalso. rewrite omap_None in Hmap. destruct Hmap as [v [Hv Hpresent]].
+        rewrite in_map_iff in Hv. destruct Hv as [e [? He]]. subst v.
+        destruct (Forall2_in_left _ _ _ _ Hall He) as [v [Hv Hv']].
+        rewrite Forall_forall in IHe. apply IHe in Hv'; trivial; []. subst v. rewrite in_map_iff in Hv.
+        destruct Hv as [? [Hv ?]]. rewrite <- Hv in *. simpl in *. discriminate.
+    * destruct el as [| e el]; try congruence; [].
+      inv IHe. take (Forall _ (_ :: _)) and inv it.
+      assert (Heq : absent = interp_exp_instant e) by auto.
+      simpl. rewrite <- Heq. simpl. reflexivity.
     Qed.
 
     Lemma interp_exps_instant_sound:

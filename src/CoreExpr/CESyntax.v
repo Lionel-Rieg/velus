@@ -20,12 +20,32 @@ Module Type CESYNTAX (Import Op: OPERATORS).
 
   (** ** Expressions *)
 
+  (* We do not want the too weak Coq generated induction principles *)
+  Unset Elimination Schemes.
+
   Inductive exp : Type :=
   | Econst : const -> exp
   | Evar   : ident -> type -> exp
   | Ewhen  : exp -> ident -> bool -> exp
-  | Eunop  : unop -> exp -> type -> exp
-  | Ebinop : binop -> exp -> exp -> type -> exp.
+  | Eop    : operator -> list exp -> type -> exp.
+
+  (* Back to normal *)
+  Set Elimination Schemes.
+
+  (* Let us define our own induction principle *)
+  Definition exp_ind (P : exp -> Prop)
+    (f_const : forall c, P (Econst c))
+    (f_var   : forall id ty, P (Evar id ty))
+    (f_when  : forall e, P e -> forall id b, P (Ewhen e id b))
+    (f_op    : forall op el (IHe : List.Forall P el), forall ty, P (Eop op el ty)) :=
+  fix F (x : exp) : P x :=
+    match x as e return (P e) with
+    | Econst c => f_const c
+    | Evar id ty => f_var id ty
+    | Ewhen e id b => f_when e (F e) id b
+    | Eop op el ty => f_op op el (list_ind (List.Forall P) (List.Forall_nil P)
+           (fun e el IHel => List.Forall_cons e (F e) IHel) el) ty
+    end.
 
   (** ** Control expressions *)
 
@@ -38,8 +58,7 @@ Module Type CESYNTAX (Import Op: OPERATORS).
     match le with
     | Econst c => type_const c
     | Evar _ ty
-    | Eunop _ _ ty
-    | Ebinop _ _ _ ty => ty
+    | Eop _ _ ty => ty
     | Ewhen e _ _ => typeof e
     end.
 

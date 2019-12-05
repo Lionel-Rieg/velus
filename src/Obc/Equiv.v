@@ -160,6 +160,10 @@ Module Type EQUIV
     induction e; intros v Henv; inversion 1; subst; eauto using exp_eval.
     - take (Env.find _ _ = Some _) and (rewrite it; apply Henv in it as (v' & -> & <-));
         eauto using exp_eval.
+    - inv H0. econstructor; eauto; []. revert H4.
+      apply Forall2_impl_In. intros.
+      rewrite in_map_iff in H1. destruct H1 as [v' [? Hv']]. subst.
+      rewrite Forall_forall in H. now apply H.
     - take (Env.find _ _ = Some _) and apply Henv in it as (v' & -> & ?);
         eauto using exp_eval.
   Qed.
@@ -173,9 +177,9 @@ Module Type EQUIV
     intros menv env1 env2.
     induction e; intros vo Henv; inversion 1; subst;
       eauto using exp_eval, exp_eval_refines.
-    destruct (Env.find i env2).
+    destruct (Env.find id env2).
     - eauto using exp_eval_refines.
-    - exists (Env.find i env1); split; eauto using exp_eval.
+    - exists (Env.find id env1); split; eauto using exp_eval.
       discriminate.
   Qed.
 

@@ -1191,16 +1191,30 @@ Qed.
 
 Local Open Scope option_monad_scope.
 
-Remark omap_inversion:
-  forall (A B: Type) (f: A -> option B) (l: list A) (l': list B),
-    omap f l = Some l' ->
-    Forall2 (fun x y => f x = Some y) l l'.
+Lemma omap_Some : forall A B (f : A -> option B) l l',
+  omap f l = Some l' <-> Forall2 (fun x y => f x = Some y) l l'.
 Proof.
-  induction l; simpl; intros.
-  inversion_clear H. constructor.
-  destruct (f a) eqn:Hfa; [|discriminate].
-  destruct (omap f l); inversion_clear H.
-  constructor; auto.
+induction l as [| a l]; simpl; intros.
+* split; intro H; inv H; constructor.
+* destruct (f a) eqn:Hfa; [destruct (omap f l) |].
+  + split; intro H; inv H.
+    - constructor; trivial; []. now apply IHl.
+    - rewrite <- IHl in *. congruence.
+  + split; intro H; inv H. rewrite <- IHl in *. discriminate.
+  + split; intro H; inv H. congruence.
+Qed.
+
+Lemma omap_None : forall A B (f : A -> option B) l,
+  omap f l = None <-> exists e, In e l /\ f e = None.
+Proof.
+intros A B f l. induction l as [| a l]; simpl.
++ split; try discriminate; []. now intros [? []].
++ destruct (f a) eqn:Hfa; [destruct (omap f l) as [l' |] eqn:Hl |].
+  - split; try discriminate; []. intros [e [Hin ?]].
+    cut (Some l' = None); try discriminate; [].
+    rewrite IHl. exists e. split; trivial; []. destruct Hin; congruence.
+  - rewrite IHl. split; intros [e [Hin He]]; exists e; split; auto; []. destruct Hin; congruence.
+  - split; intros _; trivial; []. exists a. auto.
 Qed.
 
 (** The [omonadInv H] tactic below simplifies hypotheses of the form
@@ -1242,7 +1256,7 @@ Ltac omonadInv1 H :=
   | (match ?X with true => _ | false => None end = Some _) =>
     destruct X as [] eqn:?; [try (omonadInv1 H) | discriminate]
   | (omap ?F ?L = Some ?M) =>
-    generalize (omap_inversion F L H); intro
+    generalize (omap_Some F L H); intro
   end.
 
 Ltac omonadInv H :=

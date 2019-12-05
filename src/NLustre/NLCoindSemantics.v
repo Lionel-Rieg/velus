@@ -124,17 +124,12 @@ Module Type NLCOINDSEMANTICS
         sem_var H x xs ->
         when k es xs os ->
         sem_exp H b (Ewhen e x k) os
-  | Sunop:
-      forall H b op e ty es os,
-        sem_exp H b e es ->
-        lift1 op (typeof e) es os ->
-        sem_exp H b (Eunop op e ty) os
-  | Sbinop:
-      forall H b op e1 e2 ty es1 es2 os,
-        sem_exp H b e1 es1 ->
-        sem_exp H b e2 es2 ->
-        lift2 op (typeof e1) (typeof e2) es1 es2 os ->
-        sem_exp H b (Ebinop op e1 e2 ty) os.
+  | Sop:
+      forall H b op el ty els os,
+        el <> nil ->
+        Forall2 (sem_exp H b) el els ->
+        lift op (List.map typeof el) els os ->
+        sem_exp H b (Eop op el ty) os.
 
   Inductive sem_cexp: History -> Stream bool -> cexp -> Stream value -> Prop :=
   | Smerge:
@@ -437,34 +432,26 @@ Module Type NLCOINDSEMANTICS
         * now inv H3.
   Qed.
 
-  Add Parametric Morphism op t : (lift1 op t)
-      with signature @EqSt value ==> @EqSt value ==> Basics.impl
-        as lift1_EqSt.
+  Arguments EqSt {A} _ _. (* to avoid passing the type arg to EqSt everywhere! *)
+  Instance lift_EqSt : forall op tyl, Proper (EqSts ==> EqSt ==> Basics.impl) (lift op tyl).
   Proof.
-    cofix Cofix.
-    intros es es' Ees ys ys' Eys Lift.
-    destruct es' as [[]], ys' as [[]];
-      inv Lift; inv Eys; inv Ees; simpl in *; try discriminate.
-    - constructor; eapply Cofix; eauto.
-    - constructor.
-      + now inv H1; inv H3.
-      + eapply Cofix; eauto.
+  cofix Cofix.
+  intros op tyl els els' Hels ys ys' Hys Hlift.
+  inv Hlift.
+  + left.
+    - take (Forall _ _) and revert it. apply Forall_EqSt; trivial; [].
+      intros ? ? Hs. now rewrite Hs.
+    - now rewrite <- Hys.
+    - destruct Hys. eapply Cofix; eauto; []. apply map_st_EqSt; trivial; intro; apply tl_EqSt.
+  + eright; eauto.
+    - rewrite omap_Some in *. take (Forall2 _ _ _) and revert it.
+      apply Forall2_EqSt'_Proper; trivial; [].
+      intros ? ? Heq ? ? ?. subst. now rewrite Heq.
+    - now rewrite <- Hys.
+    - destruct Hys. eapply Cofix; eauto; []. apply map_st_EqSt; trivial; intro; apply tl_EqSt.
   Qed.
 
-  Add Parametric Morphism op t1 t2 : (lift2 op t1 t2)
-      with signature @EqSt value ==> @EqSt value ==> @EqSt value ==> Basics.impl
-        as lift2_EqSt.
-  Proof.
-    cofix Cofix.
-    intros e1s e1s' Ee1s e2s e2s' Ee2s ys ys' Eys Lift.
-    destruct e1s' as [[]], e2s' as [[]], ys' as [[]];
-      inv Lift; inv Eys; inv Ee1s; inv Ee2s; simpl in *; try discriminate.
-    - constructor; eapply Cofix; eauto.
-    - constructor.
-      + now inv H1; inv H3; inv H5.
-      + eapply Cofix; eauto.
-  Qed.
- Add Parametric Morphism : (const)
+  Add Parametric Morphism : (const)
       with signature @EqSt bool ==> eq ==> @EqSt value
         as const_EqSt.
   Proof.
@@ -490,28 +477,23 @@ Module Type NLCOINDSEMANTICS
         eapply Son_abs2; eauto; eapply Cofix; eauto; try reflexivity; inv Eb; auto.
   Qed.
 
-  Add Parametric Morphism H : (sem_exp H)
-      with signature @EqSt bool ==> eq ==> @EqSt value ==> Basics.impl
-        as sem_exp_morph.
+  Instance sem_exp_morph H : Proper (EqSt ==> eq ==> EqSt ==> Basics.impl) (sem_exp H).
   Proof.
-    intros b b' Eb e xs xs' Exs Sem.
-    revert b' xs' Eb Exs; induction Sem.
-    - intros. constructor.
-      rewrite <-Eb.
-      transitivity cs; auto.
-      now symmetry.
-    - econstructor; eauto.
-      eapply sem_var_EqSt; eauto.
-    - econstructor; eauto.
-      apply IHSem; auto; try reflexivity.
-      now rewrite <-Exs.
-    - econstructor.
-      + apply IHSem; auto; reflexivity.
-      + now rewrite <-Exs.
-    - econstructor.
-      + apply IHSem1; auto; reflexivity.
-      + apply IHSem2; auto; reflexivity.
-      + now rewrite <-Exs.
+  intros b b' Eb e. revert b' Eb. induction e; intros b' Eb y ? xs xs' Exs Sem; subst y; inv Sem.
+  + intros. constructor.
+    rewrite <- Eb.
+    now transitivity xs.
+  + econstructor; eauto.
+    eapply sem_var_EqSt; eauto.
+  + econstructor; eauto.
+    - eapply IHe; auto; try reflexivity; eauto.
+    - now rewrite <- Exs.
+  + econstructor.
+    - assumption.
+    - instantiate (1 := els).
+      take (Forall2 _ _ _) and revert it. apply Forall2_impl_In. intros e1 e2 Hin1 Hin2.
+      rewrite Forall_forall in *. now apply IHe.
+    - now rewrite <- Exs.
   Qed.
 
   Add Parametric Morphism H : (sem_cexp H)

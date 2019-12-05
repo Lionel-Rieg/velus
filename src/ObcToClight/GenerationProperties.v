@@ -545,9 +545,11 @@ Hint Resolve type_pres_var : core.
 Lemma type_pres:
   forall c m e, Clight.typeof (translate_exp c m e) = cltype (typeof e).
 Proof.
-  induction e as [| |cst| | |]; simpl; auto.
-  - destruct cst; simpl; reflexivity.
-  - destruct u; auto.
+  induction e as [| | [] | |]; simpl; auto; [].
+  destruct op; simpl.
+  - destruct el as [| ? [| ? ?]]; simpl; trivial; [].
+    now destruct op.
+  - now destruct el as [| ? [| ? [| ? ?]]].
 Qed.
 Hint Resolve type_pres : core.
 

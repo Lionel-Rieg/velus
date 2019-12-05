@@ -60,40 +60,49 @@ Module Type CECLOCKINGSEMANTICS
           ((exists c, sem_exp_instant base R le (present c))
            /\ sem_clock_instant base R ck true).
     Proof.
-      induction le; inversion_clear 1.
-      - intros.
-        destruct base; [right|left]; eauto using sem_exp_instant, sem_clock_instant.
-      - inversion_clear 1.
-        eapply Forall_forall in Hcm; eauto.
-        destruct v.
-        + left; split; eauto using sem_exp_instant.
-          apply Hcm; auto.
-        + right; split; eauto using sem_exp_instant.
-          apply Hcm; eauto.
-      - inversion_clear 1; eapply Forall_forall in Hcm; eauto.
-        + right; split; eauto using sem_exp_instant.
-          econstructor; eauto.
-          apply Hcm; eauto.
-        + left; split; eauto using sem_exp_instant.
-          eapply Son_abs2; eauto.
-          apply Hcm; eauto.
-        + left; split; eauto using sem_exp_instant.
-          econstructor; eauto.
-          apply Hcm; auto.
-      - inversion_clear 1.
-        + right; split; eauto using sem_exp_instant.
-          edestruct IHle as [(?&?)|(?&?)]; eauto.
-          now assert (present c = absent) by sem_det.
-        + left; split; eauto using sem_exp_instant.
-          edestruct IHle as [(?&?)|((c&?)&?)]; eauto.
-          now assert (present c = absent) by sem_det.
-      - inversion_clear 1.
-        + right; split; eauto using sem_exp_instant.
-          edestruct IHle1 as [(?&?)|(?&?)]; eauto.
-          now assert (present c1 = absent) by sem_det.
-        + left; split; eauto using sem_exp_instant.
-          edestruct IHle1 as [(?&?)|((c&?)&?)]; eauto.
-          now assert (present c = absent) by sem_det.
+    induction le; intros ck Hsem; inversion_clear Hsem.
+    * intros.
+      destruct base; [right|left]; eauto using sem_exp_instant, sem_clock_instant.
+    * inversion_clear 1.
+      eapply Forall_forall in Hcm; eauto.
+      destruct v.
+      + left; split; eauto using sem_exp_instant.
+        apply Hcm; auto.
+      + right; split; eauto using sem_exp_instant.
+        apply Hcm; eauto.
+    * inversion_clear 1; eapply Forall_forall in Hcm; eauto.
+      + right; split; eauto using sem_exp_instant.
+        econstructor; eauto.
+        apply Hcm; eauto.
+      + left; split; eauto using sem_exp_instant.
+        eapply Son_abs2; eauto.
+        apply Hcm; eauto.
+      + left; split; eauto using sem_exp_instant.
+        econstructor; eauto.
+        apply Hcm; auto.
+    * inversion_clear 1.
+      + right; split; eauto using sem_exp_instant.
+        rewrite Forall_forall in *.
+        take (Forall2 _ _ _) and rewrite <- Forall2_forall in it. destruct it as [Hall Hlen].
+        destruct el as [| e el]; try (now intuition); [].
+        assert (Hc : exists c, In c cl /\ sem_exp_instant base R e (present c)).
+        { destruct cl as [| c cl]; simpl in Hlen; try discriminate; [].
+          exists c. split; try apply Hall; now left. }
+        destruct Hc as [c [? Hc]]. edestruct IHe as [[? ?] | [? ?]].
+        - now left.
+        - firstorder.
+        - apply Hc.
+        - cut (present c = absent); try discriminate; []. eapply sem_exp_instant_det; eauto.
+        - assumption.
+      + left; split; eauto using sem_exp_instant.
+        destruct el as [| e el]; intuition.
+        inv IHe. rewrite Forall_forall in *.
+        lazymatch goal with H : forall _, _ -> sem_exp_instant base R _ absent,
+                        H' : forall _ : clock, _ |- _ =>
+          specialize (H _ ltac:(now left)); rename H' into He end.
+        edestruct He as [[] | [[c ?] ?]]; eauto; intuition; [].
+        exfalso. cut (present c = absent); try discriminate; [].
+        eapply sem_exp_instant_det; eauto.
     Qed.
 
     Corollary clock_match_instant_exp_contradiction:
@@ -125,54 +134,41 @@ Module Type CECLOCKINGSEMANTICS
           ((exists c, sem_cexp_instant base R ce (present c))
            /\ sem_clock_instant base R ck true).
     Proof.
-      induction ce.
-      - repeat inversion_clear 1.
-        + repeat match goal with
-                 | WC: wc_cexp _ _ _, SL: sem_cexp_instant _ _ _ _ |- _ =>
-                   destruct (IHce1 _ WC _ SL) as [(Hv & Hc)|((?c & Hv) & Hc)]
-                 | HA: sem_cexp_instant _ _ _ absent,
-                   HP: sem_cexp_instant _ _ _ (present ?cv) |- _ =>
-                   now assert (present cv = absent) by sem_det
-                 end.
-          right; split; eauto using sem_cexp_instant. inv Hc; auto.
-        + repeat match goal with
-                 | WC: wc_cexp _ _ _, SL: sem_cexp_instant _ _ _ _ |- _ =>
-                   destruct (IHce2 _ WC _ SL) as [(Hv & Hc)|((?c & Hv) & Hc)]
-                 | HA: sem_cexp_instant _ _ _ absent,
-                   HP: sem_cexp_instant _ _ _ (present ?cv) |- _ =>
-                   now assert (present cv = absent) by sem_det
-                 end.
-          right; split; eauto using sem_cexp_instant. inv Hc; auto.
-        + repeat match goal with
-                 | WC: wc_cexp _ _ _, SL: sem_cexp_instant _ _ _ _ |- _ =>
-                   destruct (IHce1 _ WC _ SL) as [(Hv & Hc)|((?c & Hv) & Hc)]
-                 | HA: sem_cexp_instant _ _ _ absent,
-                   HP: sem_cexp_instant _ _ _ (present ?cv) |- _ =>
-                   now assert (present cv = absent) by sem_det
-                 end.
-          left; split; eauto using sem_cexp_instant.
-          inv Hc; auto. now assert (present c = absent) by sem_det.
-      - repeat inversion_clear 1; [right|left];
-          repeat match goal with
-                 | WC: wc_cexp _ _ _, SL: sem_cexp_instant _ _ _ _ |- _ =>
-                   destruct (IHce1 _ WC _ SL) as [(Hv1 & Hc1)|((?c & Hv1) & Hc1)]
-                 | WC: wc_cexp _ _ _, SL: sem_cexp_instant _ _ _ _ |- _ =>
-                   destruct (IHce2 _ WC _ SL) as [(Hv2 & Hc2)|((?c & Hv2) & Hc2)]
-                 | HA: sem_cexp_instant _ _ _ absent,
-                   HP: sem_cexp_instant _ _ _ (present ?cv) |- _ =>
-                   now assert (present cv = absent) by sem_det
-                 | Hc: sem_exp_instant _ _ _ (present ?c),
-                   Ht: sem_cexp_instant _ _ _ (present ?ct),
-                   Hf: sem_cexp_instant _ _ _ (present ?cf),
-                   Hv: val_to_bool ?c = Some ?b |- _ =>
-                   apply (Site_eq _ _ _ _ _ _ _ _ _ Hc Ht Hf) in Hv;
-                     destruct b
-                 end; eauto using sem_cexp_instant.
-      - inversion_clear 1 as [| |? ? Hwc].
-        inversion_clear 1.
-        eapply clock_match_instant_exp in Hwc; eauto.
-        destruct Hwc as [(Hv & Hc)|((?c & Hv) & Hc)]; [left|right];
-          eauto using sem_cexp_instant.
+    induction ce.
+    - intros ck WC v Hv. inversion_clear WC; inversion_clear Hv;
+      lazymatch goal with
+               | WC: wc_cexp _ ce1 _, SL: sem_cexp_instant _ _ ce1 (present _) |- _ =>
+                 destruct (IHce1 _ WC _ SL) as [(Hv & Hc)|((?c & Hv) & Hc)]
+               | WC: wc_cexp _ _ _, SL: sem_cexp_instant _ _ ce2 _ |- _ =>
+                 destruct (IHce2 _ WC _ SL) as [(Hv & Hc)|((?c & Hv) & Hc)]
+               | HA: sem_cexp_instant _ _ _ absent,
+                 HP: sem_cexp_instant _ _ _ (present ?cv) |- _ =>
+                 now assert (present cv = absent) by sem_det
+             end;
+      solve [ right; split; eauto using sem_cexp_instant; inv Hc; auto
+            | left; split; eauto using sem_cexp_instant;
+              inv Hc; auto; now assert (present c = absent) by sem_det ].
+    - intros ck WC v Hv. inversion_clear WC; inversion_clear Hv; [right | left];
+      repeat match goal with
+               | WC: wc_cexp _ ce1 _, SL: sem_cexp_instant _ _ ce1 _ |- _ =>
+                 destruct (IHce1 _ WC _ SL) as [(Hv1 & Hc1)|((?c & Hv1) & Hc1)]
+               | WC: wc_cexp _ ce2 _, SL: sem_cexp_instant _ _ ce2 _ |- _ =>
+                 destruct (IHce2 _ WC _ SL) as [(Hv2 & Hc2)|((?c & Hv2) & Hc2)]
+               | HA: sem_cexp_instant _ _ ?x absent,
+                 HP: sem_cexp_instant _ _ ?x (present ?cv) |- _ =>
+                 now assert (present cv = absent) by sem_det
+               | Hc: sem_exp_instant _ _ _ (present ?c),
+                 Ht: sem_cexp_instant _ _ ce1 (present _),
+                 Hf: sem_cexp_instant _ _ ce2 (present _),
+                 Hv: val_to_bool ?c = Some ?b |- _ =>
+                 apply (Site_eq _ _ _ _ _ _ _ _ _ Hc Ht Hf) in Hv;
+                   destruct b
+             end; split; eauto using sem_cexp_instant.
+    - intros ck WC v Hv.
+      inversion_clear WC as [| |? ? Hwc]; inversion_clear Hv.
+      eapply clock_match_instant_exp in Hwc; eauto; [].
+      destruct Hwc as [(Hv & Hc)|((?c & Hv) & Hc)]; [left|right];
+        eauto using sem_cexp_instant.
     Qed.
 
   End ClockMatchInstant.

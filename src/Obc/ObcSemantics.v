@@ -96,17 +96,11 @@ Module Type OBCSEMANTICS
   | econst:
       forall c,
         exp_eval me ve (Const c) (Some (sem_const c))
-  | eunop :
-      forall op e c v ty,
-        exp_eval me ve e (Some c) ->
-        sem_unop op c (typeof e) = Some v ->
-        exp_eval me ve (Unop op e ty) (Some v)
-  | ebinop :
-      forall op e1 e2 c1 c2 v ty,
-        exp_eval me ve e1 (Some c1) ->
-        exp_eval me ve e2 (Some c2) ->
-        sem_binop op c1 (typeof e1) c2 (typeof e2) = Some v ->
-        exp_eval me ve (Binop op e1 e2 ty) (Some v)
+  | eop :
+      forall op el cl v ty,
+        Forall2 (exp_eval me ve) el (map Some cl) ->
+        sem_op op (combine cl (map typeof el)) = Some v ->
+        exp_eval me ve (Op op el ty) (Some v)
   | evalid:
       forall x v ty,
         Env.find x ve = Some v ->
@@ -209,20 +203,21 @@ Module Type OBCSEMANTICS
       exp_eval me ve e v2 ->
       v1 = v2.
   Proof.
-    induction e (* using exp_ind2 *);
-    intros v1 v2 H1 H2;
-    inversion H1 as [xa va tya Hv1|xa va tya Hv1|xa va Hv1
-                     |opa ea ca va tya IHa Hv1
-                     |opa e1a e2a c1a c2a va tya IH1a IH2a Hv1|? va ? Hv1];
-    inversion H2 as [xb vb tyb Hv2|xb vb tyb Hv2|xb vb Hv2
-                     |opb eb cb vb tyb IHb Hv2
-                     |opb e1b e2b c1b c2b vb tyb IH1b IH2b Hv2|? vb ? Hv2];
-    try (rewrite Hv1 in Hv2; (injection Hv2; trivial) || apply Hv2); subst; auto.
-    - assert (Some ca = Some cb) as HH by (apply IHe; auto).
-      inv HH. now rewrite Hv1 in Hv2.
-    - assert (Some c1a = Some c1b) as HH1 by (apply IHe1; auto).
-      assert (Some c2a = Some c2b) as HH2 by (apply IHe2; auto).
-      inv HH1. inv HH2. now rewrite Hv1 in Hv2.
+  induction e;
+  intros v1 v2 H1 H2;
+  inversion_clear H1 as [xa va tya Hv1 | xa va tya Hv1 | xa va Hv1
+                        | opa ea ca va tya IHa Hv1 | ? va ? Hv1];
+  inversion_clear H2 as [xb vb tyb Hv2 | xb vb tyb Hv2 | xb vb Hv2
+                        | opb eb cb vb tyb IHb Hv2 | ? vb ? Hv2];
+  try (rewrite Hv1 in Hv2; (injection Hv2; trivial) || apply Hv2); subst; auto; [].
+  rewrite <- Hv1, <- Hv2. repeat f_equal.
+  clear Hv1 Hv2. revert dependent cb. revert dependent ca.
+  induction el as [| e el]; intros ca Hca cb Hcb.
+  + destruct ca, cb; trivial; inv Hca; inv Hcb.
+  + destruct ca, cb; inv Hca; inv Hcb; []. f_equal.
+    - cut (Some v = Some v0); try (now intro Heq; inv Heq); [].
+      inv H. eauto.
+    - apply IHel; trivial; []. now inv H.
   Qed.
 
   Lemma exps_eval_det:
@@ -358,37 +353,6 @@ Module Type OBCSEMANTICS
             eauto using stmt_eval.
   Qed.
 
-(*
-Proof.
-    Hint Constructors stmt_eval : core.
-    induction xs.
-    - split; [ now eauto | ].
-      intro H; do 2 destruct H.
-      destruct H as [H0 H1].
-      inversion_clear H0; apply H1.
-    - intros.
-      split.
-      + intro H0.
-        apply IHxs in H0.
-        destruct H0 as [menv'' H0].
-        destruct H0 as [env'' H0].
-        destruct H0 as [H0 H1].
-        inversion_clear H1.
-        exists menv1. exists env1.
-        split; try apply IHxs; eauto.
-      + intros;
-        repeat progress
-               match goal with
-               | H:exists _, _ |- _ => destruct H
-               | H:_ /\ _ |- _ => destruct H
-               | H:stmt_eval _ _ _ (Comp _ Skip) _ |- _ => inversion_clear H
-               | H:stmt_eval _ _ _ Skip _ |- _ => inversion H; subst
-               | H:stmt_eval _ _ _ (List.fold_left _ _ _) _ |- _ => apply IHxs in H
-               | _ => eauto
-               end.
-        apply IHxs; eauto.
-  Qed.
-*)
   Lemma stmt_eval_fold_left_lift:
     forall A prog f (xs: list A) me ve iacc me' ve',
       stmt_eval prog me ve
@@ -418,18 +382,22 @@ Proof.
       ~Is_free_in_exp x e ->
       (exp_eval me ve e v <-> exp_eval me (Env.add x v' ve) e v).
   Proof.
-    intros me ve x v' e v Hfree.
-    split; intro Heval.
-    - revert v Hfree Heval.
-      induction e; intros v Hfree Heval; inv Heval;
-        try not_free; eauto using exp_eval.
-      + erewrite <-Env.gso; eauto; constructor.
-      + now constructor; rewrite Env.gso.
-    - revert v Hfree Heval.
-      induction e; intros v Hfree Heval; inv Heval;
-        try not_free; eauto using exp_eval.
-      + rewrite Env.gso; auto; constructor.
-      + constructor; erewrite <-Env.gso; eauto.
+  intros me ve x v' e v Hfree.
+  split; intro Heval.
+  + revert v Hfree Heval.
+    induction e; intros v Hfree Heval; inv Heval;
+      try not_free; eauto using exp_eval.
+    - erewrite <-Env.gso; eauto; constructor.
+    - econstructor; eauto; []. revert H4. apply Forall2_impl_In.
+      intros. rewrite Forall_forall in *. apply H; auto.
+    - now constructor; rewrite Env.gso.
+  + revert v Hfree Heval.
+    induction e; intros v Hfree Heval; inv Heval;
+      try not_free; eauto using exp_eval.
+    - rewrite Env.gso; auto; constructor.
+    - econstructor; eauto; []. revert H4. apply Forall2_impl_In.
+      intros. rewrite Forall_forall in *. apply H; auto.
+    - constructor; erewrite <- Env.gso; eauto.
   Qed.
 
   Lemma exp_eval_adds_extend_venv:
@@ -462,22 +430,28 @@ Proof.
       (exp_eval (add_val x v' me) ve e v <-> exp_eval me ve e v).
   Proof.
     intros me ve x v' e v Hfree. split.
-    - revert v Hfree.
+    + revert v Hfree.
       induction e; intros v1 Hfree Heval; inv Heval;
-        try not_free; try rewrite find_val_gso in *; eauto using exp_eval.
-    - revert v Hfree.
+        try not_free; try rewrite find_val_gso in *; eauto using exp_eval; [].
+      econstructor; eauto; []. revert H4. apply Forall2_impl_In.
+      intros. rewrite Forall_forall in *. apply H; auto.
+    + revert v Hfree.
       induction e; intros v1 Hfree Heval; inv Heval;
-        try not_free; eauto using exp_eval.
-      now constructor; rewrite find_val_gso.
+        try not_free; eauto using exp_eval; [|].
+      - now constructor; rewrite find_val_gso.
+      - econstructor; eauto; []. revert H4. apply Forall2_impl_In.
+        intros. rewrite Forall_forall in *. apply H; auto.
   Qed.
 
   (** If we add objects to [me], evaluation does not change. *)
   Lemma exp_eval_extend_menv_by_obj : forall me ve f obj e v,
       exp_eval (add_inst f obj me) ve e v <-> exp_eval me ve e v.
   Proof.
-    intros me ve f v' e v. split; revert v.
-    - induction e; intros v1 Heval; inv Heval; eauto using exp_eval.
-    - induction e; intros v1 Heval; inv Heval; eauto using exp_eval.
+    intros me ve f v' e. induction e; intro v;
+    try (now split; intro Heval; inv Heval; eauto using exp_eval); [].
+    rewrite Forall_forall in H.
+    split; intro Heval; inv Heval; econstructor; eauto; revert H4;
+    apply Forall2_compat; intros; now rewrite H.
   Qed.
 
   Lemma Forall2_exp_eval_not_None:

@@ -61,12 +61,12 @@ Module Type NLCLOCKING
         Forall2 (fun '(x, (_, xck)) le =>
                    SameVar (sub x) le
                    /\ exists lck, wc_exp vars le lck
-                            /\ instck ck sub xck = Some lck)
+                               /\ instck ck sub xck = Some lck)
                 n.(n_in) les ->
         Forall2 (fun '(y, (_, yck)) x =>
                    sub y = Some x
                    /\ exists xck, In (x, xck) vars
-                            /\ instck ck sub yck = Some xck)
+                               /\ instck ck sub yck = Some xck)
                 n.(n_out) xs ->
         (forall yck, r = Some yck -> In yck vars) ->
         wc_equation G vars (EqApp xs ck f les r)

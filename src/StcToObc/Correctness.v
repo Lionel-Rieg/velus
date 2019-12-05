@@ -48,12 +48,6 @@ Module Type CORRECTNESS
         eq_if_present absent v.
   Hint Constructors eq_if_present : core.
 
-  Definition value_to_option (v: value) : option val :=
-    match v with
-    | absent => None
-    | present c => Some c
-    end.
-
   Definition equiv_env (in_domain: ident -> Prop) (R: env)
              (mems: PS.t) (me: menv) (ve: venv) : Prop :=
     forall x v,
@@ -172,8 +166,7 @@ Module Type CORRECTNESS
         cases; apply IHck with (1 := Hp); eauto.
   Qed.
 
-  (** If the clock is absent, then the controlled statement evaluates as
-  a [Skip].  *)
+  (** If the clock is absent, then the controlled statement evaluates as a [Skip]. *)
 
   Lemma stmt_eval_Control_absent:
     forall prog mems me ve ck s,
@@ -204,14 +197,23 @@ Module Type CORRECTNESS
         equiv_env (fun x => CE.IsF.Is_free_in_exp x e) R mems me ve ->
         exp_eval me ve (translate_exp mems e) (Some c).
     Proof.
-      induction e; inversion_clear 1; simpl; intros; auto.
-      - match goal with H: _ = _ |- _ => inv H end.
-        econstructor; congruence.
-      - split_env_assumption; cases; try rewrite eq_if_present_present in *;
-          eauto using exp_eval.
-        take (Env.find _ _ = _) and rewrite <-it; constructor.
-      - econstructor; eauto; now rewrite typeof_correct.
-      - econstructor; eauto; now rewrite 2 typeof_correct.
+    induction e; inversion_clear 1; simpl; intros; auto.
+    * match goal with H: _ = _ |- _ => inv H end.
+      econstructor; congruence.
+    * split_env_assumption; cases; try rewrite eq_if_present_present in *;
+        eauto using exp_eval.
+      take (Env.find _ _ = _) and rewrite <-it; constructor.
+    * econstructor.
+      + instantiate (1 := cl).
+        assert (Henv : equiv_env (fun x : ident => Exists (IsF.Is_free_in_exp x) el) R mems me ve).
+        { revert H. apply equiv_env_map. intros. now constructor. }
+        clear dependent op. revert dependent cl. take (el <> []) and clear it.
+        induction el; intros cl Hall.
+        - inv Hall. symmetry in H. apply map_eq_nil in H. subst cl. constructor.
+        - inv Hall. destruct cl as [| v cl]; try discriminate; [].
+          take (_ :: _ = _) and inv it. inv IHe. simpl. constructor; auto.
+      + take (sem_op _ _ = _) and rewrite map_map, <- it. do 2 f_equal. apply map_ext.
+        intro. now rewrite typeof_correct.
     Qed.
     Hint Resolve exp_correct : core.
 
@@ -793,7 +795,7 @@ Module Type CORRECTNESS
     induction e; simpl;
       intros v nck ck lck Hcm EqEnv Hnoo Hwc Hinst Hbck He Hlck Hmems; eauto.
     - (* Variables always evaluate (even if it is to None) *)
-      destruct (PS.mem i mems) eqn:Himems; eauto.
+      destruct (PS.mem id mems) eqn:Himems; eauto.
       rewrite PS.mem_spec in Himems.
       apply Hmems in Himems.
       apply not_None_is_Some in Himems as (v' & Hv'); eauto.
@@ -817,7 +819,7 @@ Module Type CORRECTNESS
            the same value. *)
         simpl in *.
         destruct (instck ck isub nck) eqn:Heq; try discriminate.
-        destruct (isub i1); try discriminate.
+        destruct (isub i0); try discriminate.
         inv Hwc. inv Hinst. inv Hlck.
         * (* Con lck i0 b0 = false because lck = false,
              the goal follows form the induction hypothesis. *)
@@ -829,20 +831,16 @@ Module Type CORRECTNESS
                         H:sem_exp_instant _ _ e (present _) |- _ =>
                         eapply exp_correct in H; eauto end.
           (* an absent value would contradict the fact that clock lck = true *)
-          match goal with Hle:sem_exp_instant _ _ e absent,
-                              Hck:sem_clock_instant _ _ lck true |- _ =>
+          lazymatch goal with Hle : sem_exp_instant _ _ e absent,
+                              Hck : sem_clock_instant _ _ lck true |- _ =>
             apply clock_match_instant_exp_contradiction with (1:=Hcm) (3:=Hle) in Hck; auto
           end. intuition.
-    - (* Unary operators: cannot be slower than the node base clock *)
+    - (* Operators: cannot be slower than the node base clock *)
       destruct nck.
       + (* lck = ck; one can't be true and the other false. *)
         inv Hinst. now apply sem_clock_instant_det with (1:=Hbck) in Hlck.
       + (* lck is a subclock of ck and ops are thus precluded by noops_exp. *)
         inv Hnoo.
-    - (* Binary operators: reasoning as for unary operators. *)
-      destruct nck.
-      + inv Hinst. now apply sem_clock_instant_det with (1:=Hbck) in Hlck.
-      + inv Hnoo.
   Qed.
 
   Lemma TcCall_check_args_translate_arg:
@@ -874,8 +872,7 @@ Module Type CORRECTNESS
     simpl in *.
     assert (WClck':=WClck).
     assert (equiv_env (fun x => CE.IsF.Is_free_in_exp x le) R mems me ve)
-      by (weaken_equiv_env with constructor;
-          apply Exists_exists; eauto).
+      by (weaken_equiv_env with constructor; apply Exists_exists; eauto).
     eapply clock_match_instant_exp in WClck'
       as [(Hsem' & Hcksem')|((c & Hsem') & Hcksem')]; eauto;
       apply sem_exp_instant_det with (1:=Hsem) in Hsem'; subst v.
@@ -889,14 +886,13 @@ Module Type CORRECTNESS
         match goal with H:context [sub ?i] |- _ =>
                         destruct (sub i) eqn:Hisub; try discriminate end.
         injection Hinst; intro; subst lck.
-        inversion_clear WClck as [|? ? ? Hicks| | |].
+        inversion_clear WClck as [| |? ? ? Hicks|].
         simpl in Hv'; destruct (PS.mem i0 mems) eqn: E.
         * unfold translate_arg, var_on_base_clock; simpl; rewrite E; simpl; auto.
-        *{ apply Hcvars in Hicks.
-           - unfold translate_arg, var_on_base_clock; simpl; rewrite Hicks, E; simpl.
+        * apply Hcvars in H0.
+          -- unfold translate_arg, var_on_base_clock; simpl; rewrite H0, E; simpl.
              now rewrite instck_subclock_not_clock_eq with (1:=Hck).
-           - apply PSE.MP.Dec.F.not_mem_iff; auto.
-         }
+          -- apply PSE.MP.Dec.F.not_mem_iff; auto.
     - exists (Some c); simpl; split; eauto using arg_correct, exp_correct.
   Qed.
 

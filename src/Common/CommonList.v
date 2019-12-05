@@ -998,21 +998,10 @@ Section Pointwise.
   Global Instance Forall_Permutation_Proper:
     Proper (pointwise_relation A iff ==> Permutation (A:=A) ==> iff) (@Forall A).
   Proof.
-    intros P Q HPQ xs ys Hperm.
-    assert (forall ws, Forall P ws <-> Forall Q ws) as Hsame
-        by (induction ws as [|w ws]; split; inversion_clear 1;
-          auto; constructor; try (rewrite HPQ || rewrite <-HPQ); intuition).
-    induction Hperm.
-    - split; auto.
-    - split; inversion_clear 1.
-      + constructor; try rewrite <-HPQ; intuition.
-      + constructor; try rewrite HPQ; intuition.
-    - split; intro;
-        repeat match goal with H:Forall _ (_::_) |- _ => inversion_clear H end;
-
-        repeat constructor; try (rewrite HPQ || rewrite <-HPQ); auto;
-          now apply Hsame.
-    - now rewrite IHHperm1, <-IHHperm2, Hsame.
+  intros P Q HPQ xs ys Hperm. rewrite 2 Forall_forall.
+  split; intros H ? ?.
+  - rewrite <- HPQ. apply H. now rewrite Hperm.
+  - rewrite HPQ. apply H. now rewrite <- Hperm.
   Qed.
 
   Global Instance Exists_Permutation_Proper:
@@ -1197,16 +1186,13 @@ Section ForallExists.
     intros * HH. apply Forall_app in HH. intuition.
   Qed.
 
-  Lemma Forall_impl_In :
-    forall (Q : A -> Prop) l,
-      (forall a, In a l -> P a -> Q a) ->
-      Forall P l -> Forall Q l.
-  Proof.
-    induction l; auto.
-    intros H HP.
-    inversion_clear HP.
-    auto using in_eq, in_cons.
-  Qed.
+  Lemma Forall_impl_In : forall (P1 P2 : A -> Prop) l,
+    (forall e, In e l -> P1 e -> P2 e) -> Forall P1 l -> Forall P2 l.
+  Proof. intros. rewrite Forall_forall in *. auto. Qed.
+
+  Lemma Forall_compat : forall (P1 P2 : A -> Prop) l,
+    (forall e, In e l -> P1 e <-> P2 e) -> Forall P1 l <-> Forall P2 l.
+  Proof. split; apply Forall_impl_In; firstorder. Qed.
 
   Lemma Forall_Forall':
     forall (Q : A -> Prop) (xs : list A),
@@ -1590,11 +1576,11 @@ Section Forall2.
           nth n l2 b = x2 ->
           P x1 x2.
   Proof.
-    intros P l1. induction l1; intro l2.
-    * split; intro H.
+  intros P l1. induction l1; intro l2.
+  * split; intro H.
     + inversion_clear H. split; simpl; auto. intros. omega.
     + destruct H as [H _]. destruct l2; try discriminate. constructor.
-      * split; intro H.
+  * split; intro H.
     + inversion_clear H. rewrite IHl1 in H1. destruct H1. split; simpl; auto.
       intros. destruct n; subst; trivial. eapply H1; eauto. omega.
     + destruct H as [Hlen H].
@@ -1743,6 +1729,11 @@ Section Forall2.
     apply Forall2_cons;
       auto using in_eq, in_cons.
   Qed.
+
+  Lemma Forall2_compat : forall (P1 P2 : A -> B -> Prop) l1 l2,
+    (forall e1 e2, In e1 l1 -> In e2 l2 -> P1 e1 e2 <-> P2 e1 e2) ->
+    Forall2 P1 l1 l2 <-> Forall2 P2 l1 l2.
+  Proof. intros ? ? ? ? HP. split; apply Forall2_impl_In; intros; now rewrite HP || rewrite <- HP. Qed.
 
   Lemma Forall2_swap_args:
     forall (P: A -> B -> Prop) (xs: list A) (ys: list B),

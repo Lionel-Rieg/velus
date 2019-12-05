@@ -49,33 +49,37 @@ Module Type CEPROPERTIES
       (forall x, Is_free_in_exp x e -> Env.find x R = Env.find x R') ->
       sem_exp_instant b R e v <-> sem_exp_instant b R' e v.
   Proof.
-    induction e; intros v RRx.
-    - (* Econst *)
-      split; inversion 1; destruct b; eauto using sem_exp_instant.
-    - (* Evar *)
-      split; inversion_clear 1;
-        take (sem_var_instant _ _ _) and eapply sem_var_instant_switch_env in it;
-        eauto using sem_exp_instant.
+  induction e; intros v RRx.
+  * (* Econst *)
+    split; inversion 1; destruct b; eauto using sem_exp_instant.
+  * (* Evar *)
+    split; inversion_clear 1;
+      take (sem_var_instant _ _ _) and eapply sem_var_instant_switch_env in it;
+      eauto using sem_exp_instant.
+    symmetry; auto.
+  * (* Ewhen *)
+    split; inversion_clear 1;
+      take (sem_var_instant _ _ _) and eapply sem_var_instant_switch_env in it;
+      take (sem_exp_instant _ _ _ _)
+           and (erewrite IHe in it || rewrite <-IHe in it);
+      eauto using sem_exp_instant;
       symmetry; auto.
-    - (* Ewhen *)
-      split; inversion_clear 1;
-        take (sem_var_instant _ _ _) and eapply sem_var_instant_switch_env in it;
-        take (sem_exp_instant _ _ _ _)
-             and (erewrite IHe in it || rewrite <-IHe in it);
-        eauto using sem_exp_instant;
-        symmetry; auto.
-    - (* Eunop *)
-      split; inversion_clear 1;
-        take (sem_exp_instant _ _ _ _)
-             and (erewrite IHe in it || rewrite <-IHe in it);
-        eauto using sem_exp_instant.
-    - (* Ebinop *)
-      split; inversion_clear 1;
-        take (sem_exp_instant _ _ e1 _)
-             and (erewrite IHe1 in it || rewrite <-IHe1 in it);
-        take (sem_exp_instant _ _ e2 _)
-             and (erewrite IHe2 in it || rewrite <-IHe2 in it);
-        eauto using sem_exp_instant.
+  * (* Eop *)
+    split; inversion_clear 1.
+    + econstructor; eauto; [].
+      take (Forall2 _ _ _) and revert it. apply Forall2_compat.
+      intros. symmetry. rewrite Forall_forall in IHe. apply IHe; trivial; []. 
+      intros. apply RRx. constructor. rewrite Exists_exists. eauto.
+    + constructor; trivial; [].
+      rewrite Forall_forall in *. intros. rewrite <- IHe; auto; [].
+      intros. apply RRx. constructor. rewrite Exists_exists. eauto.
+    + econstructor; eauto; [].
+      take (Forall2 _ _ _) and revert it. apply Forall2_compat.
+      intros. rewrite Forall_forall in IHe. apply IHe; trivial; [].
+      intros. apply RRx. constructor. rewrite Exists_exists. eauto.
+    + constructor; trivial; [].
+      rewrite Forall_forall in *. intros. rewrite IHe; auto; [].
+      intros. apply RRx. constructor. rewrite Exists_exists. eauto.
   Qed.
 
   Lemma sem_exps_instant_switch_env:
@@ -203,7 +207,8 @@ Module Type CEPROPERTIES
       InMembers x xs.
   Proof.
     induction e; inversion_clear 1; inversion_clear 1; eauto using idty_InMembers.
-    take (_ \/ _) and destruct it; auto.
+    rewrite Exists_exists, Forall_forall in *.
+    take (exists _, _) and destruct it as [? []]. eauto.
   Qed.
 
   Lemma Is_free_in_wt_clock:

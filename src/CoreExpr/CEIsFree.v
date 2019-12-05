@@ -38,10 +38,8 @@ Module Type CEISFREE
       Is_free_in_exp x (Ewhen e c cv)
   | FreeEwhen2: forall e c cv,
       Is_free_in_exp c (Ewhen e c cv)
-  | FreeEunop : forall c op e ty,
-      Is_free_in_exp c e -> Is_free_in_exp c (Eunop op e ty)
-  | FreeEbinop : forall c op e1 e2 ty,
-      Is_free_in_exp c e1 \/ Is_free_in_exp c e2 -> Is_free_in_exp c (Ebinop op e1 e2 ty).
+  | FreeEop : forall c op el ty,
+      List.Exists (Is_free_in_exp c) el -> Is_free_in_exp c (Eop op el ty).
 
   Inductive Is_free_in_aexp : ident -> clock -> exp -> Prop :=
   | freeAexp1: forall ck e x,
@@ -155,8 +153,7 @@ Module Type CEISFREE
     | Econst _ => fvs
     | Evar x _ => PS.add x fvs
     | Ewhen e x _ => free_in_exp e (PS.add x fvs)
-    | Eunop _ e _ => free_in_exp e fvs
-    | Ebinop _ e1 e2 _ => free_in_exp e2 (free_in_exp e1 fvs)
+    | Eop _ el _ => List.fold_right free_in_exp fvs el
     end.
 
   Definition free_in_aexp (ck: clock)(le : exp) (fvs : PS.t) : PS.t :=
@@ -204,34 +201,39 @@ Module Type CEISFREE
     forall x e m, PS.In x (free_in_exp e m)
                   <-> Is_free_in_exp x e \/ PS.In x m.
   Proof.
-    intro x; induction e using exp_ind;
-      try now intro m; (split;
-                        [
-                          intro H0; try apply IHe in H0
-                        | intro H0; try apply IHe
-                       ]);
-      try destruct H0 as [H0|H0];
-      try apply free_in_clock_spec in H0;
-      try inversion H0; subst;
-        try apply PS.add_spec;
-        solve [
-            intuition
-          | right; apply free_in_clock_spec; intuition
-          | apply PS.add_spec in H1; destruct H1; subst; intuition
-          | right; apply PS.add_spec; intuition ].
-    intro m.
-    split; intro HH.
-    - simpl in HH.
-      apply IHe2 in HH.
-      destruct HH as [HH|HH]; [now intuition|].
-      apply IHe1 in HH. intuition.
-    - simpl.
-      destruct HH as [HH|HH].
-      + inversion_clear HH as [| | | |? ? ? ? ? Hf].
-        apply IHe2.
-        destruct Hf as [HH|HH]; intuition.
-        right. apply IHe1; intuition.
-      + apply IHe2; right; apply IHe1; intuition.
+  intro x; induction e;
+    try now intro m; (split;
+                      [
+                        intro H0; try apply IHe in H0
+                      | intro H0; try apply IHe
+                     ]);
+    try destruct H0 as [H0|H0];
+    try apply free_in_clock_spec in H0;
+    try inversion H0; subst;
+      try apply PS.add_spec;
+      solve [
+          intuition
+        | right; apply free_in_clock_spec; intuition
+        | apply PS.add_spec in H1; destruct H1; subst; intuition
+        | right; apply PS.add_spec; intuition ].
+  intro m. simpl.
+  split; intro Hin.
+  * destruct (PSP.In_dec x m); try (now right); []; left. constructor.
+    induction el as [| e el]; simpl in Hin; try contradiction; [].
+    inversion_clear IHe as [| ? ? He Hel].
+    apply He in Hin. destruct Hin; try (now left); [].
+    right. now apply IHel.
+  * destruct Hin as [Hin | Hin].
+    + inv Hin. rewrite Exists_exists in *.
+      match goal with H : exists x : exp, _ |- _ => destruct H as [e [Hel He]] end.
+      rewrite Forall_forall in IHe.
+      induction el as [| e' el]; inv Hel; simpl.
+      - rewrite IHe; now left.
+      - rewrite IHe; try (now left); []. right. apply IHel; trivial; [].
+        intros. apply IHe. now right.
+    + induction el as [| e' el]; simpl; trivial; [].
+      inversion_clear IHe as [| ? ? He Hel].
+      apply IHel in Hel. rewrite He. now right.
   Qed.
 
   Lemma free_in_exp_spec':
@@ -365,6 +367,10 @@ Module Type CEISFREE
   Proof.
     setoid_rewrite (free_in_caexp_spec _ _ _ PS.empty); intuition.
   Qed.
+
+  Lemma Is_free_in_exp_Eop_inv : forall id op el ty,
+    Is_free_in_exp id (Eop op el ty) <-> Exists (Is_free_in_exp id) el.
+  Proof. split; intro H; now (constructor || inv H). Qed.
 
 End CEISFREE.
 

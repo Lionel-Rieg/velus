@@ -70,6 +70,13 @@ Definition translate_unop (op: unop): Clight.expr -> Ctypes.type -> Clight.expr 
 Definition translate_binop (op: binop): Clight.expr -> Clight.expr -> Ctypes.type -> Clight.expr :=
   Clight.Ebinop op.
 
+Definition translate_op (op : operator) (el : list Clight.expr) : Ctypes.type -> Clight.expr :=
+  match op, el with
+    | Unary uop, v :: nil => translate_unop uop v
+    | Binary binop, v1 :: v2 :: nil => translate_binop binop v1 v2
+    | _, _ => Clight.Econst_int Int.zero (* dummy cases *)
+  end.
+
 Section Translate.
   Variable (prog: program) (owner: class) (caller: method).
 
@@ -95,10 +102,8 @@ Section Translate.
       deref_field self owner.(c_name) x (cltype ty)
     | Const c =>
       translate_const c
-    | Unop op e ty =>
-      translate_unop op (translate_exp e) (cltype ty)
-    | Binop op e1 e2 ty =>
-      translate_binop op (translate_exp e1) (translate_exp e2) (cltype ty)
+    | Op op el ty =>
+      translate_op op (map translate_exp el) (cltype ty)
     end.
 
   Fixpoint list_type_to_typelist (tys: list Ctypes.type): Ctypes.typelist :=

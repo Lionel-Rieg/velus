@@ -450,55 +450,39 @@ Module Type NLINDEXEDTOCOIND
       - right; right; repeat split; auto; intuition CESem.sem_det.
     Qed.
 
-    Lemma unop_inv:
-      forall H b op e ty es,
-        CESem.sem_exp b H (Eunop op e ty) es ->
-        exists ys,
-          CESem.sem_exp b H e ys
-          /\
-          (forall n,
-              (exists c c',
-                  ys n = present c
-                  /\ sem_unop op c (typeof e) = Some c'
-                  /\ es n = present c')
-              \/
-              (ys n = absent
-               /\ es n = absent)).
+    Lemma op_inv:
+      forall H b op el ty els,
+        CESem.sem_exp b H (Eop op el ty) els ->
+        exists yls,
+             el <> nil
+          /\ Forall2 (CESem.sem_exp b H) el yls
+          /\ (forall n, (exists cl c', List.map (fun x => x n) yls  = List.map present cl
+                                       /\ sem_op op (combine cl (List.map typeof el)) = Some c'
+                                       /\ els n = present c')
+                     \/ (Forall (fun x => x n = absent) yls
+                         /\ els n = absent)).
     Proof.
-      intros * Sem.
-      interp_str b H e Sem.
-      eexists; intuition; eauto.
-      specialize (Sem_e n); specialize (Sem n); inv Sem.
-      - left; exists c, c'; repeat split; auto; intuition CESem.sem_det.
-      - right; repeat split; intuition CESem.sem_det.
+    intros * Hsem.
+    exists (List.map (fun e n => interp_exp_instant (b n) (H n) e) el).
+    repeat split.
+    * specialize (Hsem 0). now inv Hsem.
+    * rewrite <- Forall2_forall. rewrite map_length. split; trivial; [].
+      intros e s Hin. apply In_combine_f_right in Hin. destruct Hin as [Hin ?]. subst s.
+      intro n. specialize (Hsem n). inv Hsem.
+      + edestruct (@Forall2_in_left exp value) as [v [Hin' Hv]]; eauto; [].
+        now rewrite <- (interp_exp_instant_sound _ _ _ _ Hv).
+      + take (Forall _ _) and rewrite Forall_forall in it. apply it in Hin.
+        now rewrite <- (interp_exp_instant_sound _ _ _ _ Hin).
+    * intro n. specialize (Hsem n). inv Hsem; [left | right].
+      + exists cl, c'. split.
+        - rewrite map_map, <- Forall2_eq, Forall2_map_1.
+          take (Forall2 _ _ _) and revert it. apply Forall2_impl_In.
+          intros. symmetry. apply interp_exp_instant_sound. auto.
+        - auto.
+      + split; trivial; []. rewrite Forall_map. rewrite Forall_forall in *.
+        intros. symmetry. apply interp_exp_instant_sound. auto.
     Qed.
 
-    Lemma binop_inv:
-      forall H b op e1 e2 ty es,
-        CESem.sem_exp b H (Ebinop op e1 e2 ty) es ->
-        exists ys zs,
-          CESem.sem_exp b H e1 ys
-          /\ CESem.sem_exp b H e2 zs
-          /\
-          (forall n,
-              (exists c1 c2 c',
-                  ys n = present c1
-                  /\ zs n = present c2
-                  /\ sem_binop op c1 (typeof e1) c2 (typeof e2) = Some c'
-                  /\ es n = present c')
-              \/
-              (ys n = absent
-               /\ zs n = absent
-               /\ es n = absent)).
-    Proof.
-      intros * Sem.
-      interp_str b H e1 Sem.
-      interp_str b H e2 Sem.
-      do 2 eexists; intuition; eauto.
-      specialize (Sem_e1 n); specialize (Sem_e2 n); specialize (Sem n); inv Sem.
-      - left; exists c1, c2, c'; repeat split; auto; intuition CESem.sem_det.
-      - right; repeat split; auto; intuition CESem.sem_det.
-    Qed.
 
     (** An inversion principle for [sem_clock] which also uses the interpretor. *)
     Lemma sem_clock_inv:
@@ -595,7 +579,7 @@ Module Type NLINDEXEDTOCOIND
 
     (** State the correspondence for [exp].
         Goes by induction on [exp] and uses the previous inversion lemmas. *)
-    Hint Constructors when lift1 lift2 : core.
+    Hint Constructors when CStr.lift.
     Lemma sem_exp_impl_from:
       forall n H b e es,
         CESem.sem_exp b H e es ->
@@ -605,26 +589,25 @@ Module Type NLINDEXEDTOCOIND
       intros * Sem.
       revert dependent H; revert b es n.
       induction e; intros * Sem; unfold CESem.sem_exp, CESem.lift in Sem.
-
-      - constructor.
+      + constructor.
         apply const_spec; use_spec Sem; inv Sem; auto.
-
-      - constructor.
+      + constructor.
         apply sem_var_impl_from.
         intros n'; specialize (Sem n').
         now inv Sem.
-
-      - apply when_inv in Sem as (ys & xs & ? & ? & Spec).
+      + apply when_inv in Sem as (ys & xs & ? & ? & Spec).
         econstructor; eauto using sem_var_impl_from.
         apply when_spec; use_spec Spec.
-
-      - apply unop_inv in Sem as (ys & ? & Spec).
+      + apply op_inv in Sem as [yls [Hel [Hyls Spec]]].
         econstructor; eauto.
-        apply lift1_spec; use_spec Spec.
-
-      - apply binop_inv in Sem as (ys & zs & ? & ? & Spec).
-        econstructor; eauto.
-        apply lift2_spec; use_spec Spec.
+        - instantiate (1 := List.map (tr_stream_from n) yls).
+          rewrite Forall2_map_2. revert Hyls. apply Forall2_impl_In.
+          intros. rewrite Forall_forall in *. now apply IHe.
+        - apply lift_spec. setoid_rewrite map_map. use_spec Spec.
+          * right. repeat eexists; eauto; []. etransitivity; try eassumption; [].
+            apply map_ext. intro s. now rewrite init_from_nth.
+          * left. split; trivial; [].
+            rewrite Forall_map. unfold tr_stream_from. now setoid_rewrite init_from_nth.
     Qed.
 
     Corollary sem_exp_impl:

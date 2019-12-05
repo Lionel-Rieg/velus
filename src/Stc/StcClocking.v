@@ -70,12 +70,12 @@ Module Type STCCLOCKING
         Forall2 (fun '(x, (_, xck)) le =>
                    SameVar (sub x) le
                    /\ exists lck, wc_exp vars le lck
-                            /\ instck ck sub xck = Some lck)
+                               /\ instck ck sub xck = Some lck)
                 s.(s_in) es ->
         Forall2 (fun '(y, (_, yck)) x =>
                    sub y = Some x
                    /\ exists xck, In (x, xck) vars
-                            /\ instck ck sub yck = Some xck)
+                               /\ instck ck sub yck = Some xck)
                 s.(s_out) xs ->
         wc_trconstr P vars (TcCall i xs ck rst f es).
 

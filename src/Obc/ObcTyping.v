@@ -56,15 +56,10 @@ Module Type OBCTYPING
         wt_exp (State x ty)
     | wt_Const: forall c,
         wt_exp (Const c)
-    | wt_Unop: forall op e ty,
-        type_unop op (typeof e) = Some ty ->
-        wt_exp e ->
-        wt_exp (Unop op e ty)
-    | wt_Binop: forall op e1 e2 ty,
-        type_binop op (typeof e1) (typeof e2) = Some ty ->
-        wt_exp e1 ->
-        wt_exp e2 ->
-        wt_exp (Binop op e1 e2 ty)
+    | wt_Op: forall op el ty,
+        type_op op (map typeof el) = Some ty ->
+        Forall wt_exp el ->
+        wt_exp (Op op el ty)
     | wt_Valid: forall x ty,
         In (x, ty) vars ->
         wt_exp (Valid x ty).
@@ -128,12 +123,13 @@ Module Type OBCTYPING
                                      ==> @Permutation.Permutation (ident * type)
                                      ==> @eq exp ==> iff) wt_exp.
   Proof.
-    intros m2 m1 Hm v2 v1 Hv e' e He; subst.
-    induction e; split; inversion_clear 1; constructor;
-      try rewrite Hm in *;
-      try rewrite Hv in *;
-      repeat match goal with H:_ <-> _ |- _ => apply H; clear H end;
-      auto with obctyping.
+  intros m2 m1 Hm v2 v1 Hv e' e He; subst.
+  induction e; split; inversion_clear 1; constructor; rewrite ?Hm, ?Hv in *;
+  repeat match goal with H:_ <-> _ |- _ => apply H; clear H end;
+  auto with obctyping; rewrite Forall_forall in H.
+  - revert H2. apply Forall_compat; trivial; [].
+    intros. symmetry. now apply H.
+  - revert H2. now apply Forall_compat.
   Qed.
 
   Instance wt_stmt_Proper:
@@ -335,15 +331,21 @@ Module Type OBCTYPING
     intros until v. intros WTm WTv.
     revert v.
     induction e; intros v WTe Hexp.
-    - inv WTe. inv Hexp.
+    + inv WTe. inv Hexp.
       eapply venv_find_wt_val with (1:=WTv); eauto.
-    - inv WTe. inv Hexp.
+    + inv WTe. inv Hexp.
       unfold find_val in *.
       eapply venv_find_wt_val with (1:=WTm); eauto.
-    - inv Hexp. apply wt_val_const.
-    - inv WTe. inv Hexp. eauto using pres_sem_unop.
-    - inv WTe. inv Hexp. eauto using pres_sem_binop.
-    - inv WTe. inv Hexp.
+    + inv Hexp. apply wt_val_const.
+    + inv WTe. inv Hexp.
+      assert (length cl = length (map typeof el)).
+      { now erewrite <- map_length, <- (Forall2_length _ _ _ H3), map_length. }
+      eapply pres_sem_op; eauto; [].
+      clear dependent op. revert dependent cl. rewrite Forall_forall in *. 
+      induction el as [| e el]; intros [| c cl] Hall; try (now inv Hall); [|]; simpl; constructor.
+      - inv Hall. apply H; trivial; try apply H4; now left.
+      - inv Hall. apply IHel; auto; intros; now apply H || apply H4; trivial; right.
+    + inv WTe. inv Hexp.
       eapply venv_find_wt_val with (1:=WTv); eauto.
   Qed.
 
@@ -430,8 +432,7 @@ Module Type OBCTYPING
       constructor.
       + apply wt_venv_val_add; left; auto.
       + apply Forall_impl_In with (2:=WTenv).
-        destruct a as (y & ty).
-        intros Hin HTy.
+        intros [y ty] Hin HTy.
         apply NotInMembers_NotIn with (b:=ty) in Hnin.
         apply wt_venv_val_add; right; split.
         intro; subst; contradiction.

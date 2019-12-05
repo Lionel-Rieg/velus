@@ -51,15 +51,11 @@ Module Type CECLOCKING
           wc_exp e ck ->
           In (x, ck) vars ->
           wc_exp (Ewhen e x b) (Con ck x b)
-    | Cunop:
-        forall op e ck ty,
-          wc_exp e ck ->
-          wc_exp (Eunop op e ty) ck
-    | Cbinop:
-        forall op e1 e2 ck ty,
-          wc_exp e1 ck ->
-          wc_exp e2 ck ->
-          wc_exp (Ebinop op e1 e2 ty) ck.
+    | Cop:
+        forall op el ck ty,
+          el <> nil -> (* to get [wc_clock vars ck] *)
+          List.Forall (fun e => wc_exp e ck) el ->
+          wc_exp (Eop op el ty) ck.
 
     Inductive wc_cexp : cexp -> clock -> Prop :=
     | Cmerge:
@@ -89,16 +85,16 @@ Module Type CECLOCKING
       wc_exp vars le ck ->
       wc_clock vars ck.
   Proof.
-    induction le as [| |le IH | |] (* using exp_ind2 *).
-    - inversion_clear 2; now constructor.
-    - intros ck Hwc; inversion_clear 1 as [|? ? ? Hcv| | |].
+    induction le as [| |le IH |].
+    - now intros ck Hwc; inversion_clear 1.
+    - intros ck Hwc; inversion_clear 1 as [|? ? ? Hcv| |].
       apply wc_env_var with (1:=Hwc) (2:=Hcv).
     - intros ck Hwc.
-      inversion_clear 1 as [| |? ? ? ck' Hle Hcv | |].
+      inversion_clear 1 as [| |? ? ? ck' Hle Hcv |].
       constructor; [now apply IH with (1:=Hwc) (2:=Hle)|assumption].
     - intros ck Hwc; inversion_clear 1; auto.
-    - intros ck Hwc; inversion_clear 1; auto.
-  Qed.
+      destruct el; intuition; []. repeat take (Forall _ (_ :: _)) and inv it. auto.
+    Qed.
 
   Lemma wc_clock_cexp:
     forall vars ce ck,
@@ -120,21 +116,23 @@ Module Type CECLOCKING
   Hint Constructors wc_clock wc_exp wc_cexp : nlclocking.
   Hint Resolve Forall_nil : nlclocking.
 
+  Lemma wc_exp_Proper_aux :
+      Proper (@Permutation (ident * clock) ==> @eq exp ==> @eq clock ==> Basics.impl)
+             wc_exp.
+  Proof.
+  intros env' env Henv e' e He ck' ck Hck.
+  rewrite He, Hck; clear He Hck e' ck'. revert ck.
+  induction e as [| | | op el IHel ty]; inversion_clear 1; try rewrite Henv in *.
+  + now constructor.
+  + now constructor.
+  + constructor; auto; now apply IHe.
+  + constructor; trivial; []. rewrite Forall_forall in *. intros. apply IHel; auto.
+  Qed.
+
   Instance wc_exp_Proper:
     Proper (@Permutation (ident * clock) ==> @eq exp ==> @eq clock ==> iff)
            wc_exp.
-  Proof.
-    intros env' env Henv e' e He ck' ck Hck.
-    rewrite He, Hck; clear He Hck e' ck'.
-    revert ck.
-    induction e;
-      split; auto with nlclocking;
-        inversion_clear 1;
-        (rewrite Henv in * || rewrite <-Henv in * || idtac);
-        try edestruct IHe;
-        try edestruct IHe1, IHe2;
-        auto with nlclocking.
-  Qed.
+  Proof. repeat intro. split; apply wc_exp_Proper_aux; auto; now symmetry. Qed.
 
   Instance wc_cexp_Proper:
     Proper (@Permutation (ident * clock) ==> @eq cexp ==> @eq clock ==> iff)
