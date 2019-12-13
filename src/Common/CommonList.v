@@ -245,11 +245,9 @@ Section Extra.
     induction ys; auto; simpl; intros; constructor; auto; intros [|]; auto.
   Qed.
 
-  Global Add Parametric Morphism {A} : (@length A)
-      with signature @Permutation.Permutation A ==> eq
-        as length_permutation.
+  Global Instance length_permutation : Proper (Permutation (A := A) ==> eq) (@length A).
   Proof.
-    intros. now apply Permutation.Permutation_length.
+    repeat intro. now apply Permutation.Permutation_length.
   Qed.
 
   Lemma split_last:
@@ -1036,7 +1034,7 @@ Section Pointwise.
       + now rewrite IHHperm1, <-Hsame, IHHperm2.
   Qed.
 
-  Global Instance Permutation_map_Proper2 {A B}:
+  Global Instance Permutation_map_Proper2 {B}:
     Proper (pointwise_relation A eq ==> Permutation.Permutation (A:=A)
                                ==> (Permutation.Permutation (A:=B)))
            (@map A B).

@@ -106,16 +106,16 @@ Local Open Scope error_monad_scope.
 
 Parameter do_add_when_to_constants : unit -> bool.
 
-Parameter elab_const_int : Cabs.cabsloc -> string -> constant.
+Parameter elab_const_int : Cabs.loc -> string -> constant.
 Parameter elab_const_float : Cabs.floatInfo -> constant.
-Parameter elab_const_char : Cabs.cabsloc -> bool -> list char_code -> constant.
+Parameter elab_const_char : Cabs.loc -> bool -> list char_code -> constant.
 
 (* CompCert: lib/Camlcoq.ml: camlstring_of_coqstring and coqstring_of_camlstring
    using Require ExtrOCamlString in the extraction file to extract Coq
    strings as an OCaml "char list". Then use the Ident.pos_of_string
    function. *)
 Parameter string_of_astloc : astloc -> String.string.
-Parameter cabsloc_of_astloc : astloc -> Cabs.cabsloc.
+Parameter cabsloc_of_astloc : astloc -> Cabs.loc.
 Parameter cabs_floatinfo : LustreAst.floatInfo -> Cabs.floatInfo.
 
 Definition err_loc (loc: astloc) (m: errmsg) :=
@@ -2670,7 +2670,8 @@ Qed.
 
 Definition elab_declarations (decls: list LustreAst.declaration)
   : res {G | wt_global G /\ wc_global G /\ normal_args G} :=
-  elab_declarations' [] (Env.empty (list (ident * (type * clock))
-                                    * list (ident * (type * clock))))
+  elab_declarations' []
+                     (Env.empty _)
                      (conj wtg_nil (conj wc_global_nil I))
-                     Is_interface_map_empty decls.
+                     Is_interface_map_empty
+                     decls.

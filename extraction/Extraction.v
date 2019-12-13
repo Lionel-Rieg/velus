@@ -23,6 +23,7 @@ Extraction Blacklist Int String List.
 
 (* Selection *)
 Extract Constant Selection.compile_switch => "Switchaux.compile_switch".
+Extract Constant Selection.if_conversion_heuristic => "Selectionaux.if_conversion_heuristic".
 
 (* RTLgen *)
 Extract Constant RTLgen.more_likely => "RTLgenaux.more_likely".
@@ -133,7 +134,7 @@ Extract Constant elab_const_char =>
     | _ -> assert false".
 
 (* Cabs *)
-Extract Constant Cabs.cabsloc =>
+Extract Constant Cabs.loc =>
 "{ lineno : int;
    filename: string;
    byteno: int;
@@ -175,6 +176,7 @@ Separate Extraction
          VelusCorrectness.compile elab_declarations translation_unit_file
          Initializers.transl_init
          Ctyping.typecheck_program Ctyping.epostincr Ctyping.epostdecr Ctyping.epreincr Ctyping.epredecr
+	 Ctyping.eselection
          Machregs.two_address_op Machregs.mregs_for_operation Machregs.mregs_for_builtin Machregs.is_stack_reg
 	       Machregs.destroyed_at_indirect_call
 	       Conventions1.is_float_reg Conventions1.callee_save_type

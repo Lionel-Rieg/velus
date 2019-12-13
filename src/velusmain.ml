@@ -11,14 +11,6 @@
 (*                                                                     *)
 (* *********************************************************************)
 
-open Errors
-open Camlcoq
-open Printf
-open Clight
-open C2C
-open Builtins
-open Ctypes
-
 let print_c = ref false
 let write_lustre = ref false
 let write_nlustre = ref false
@@ -40,7 +32,7 @@ let get_main_node decls =
     | _::ds -> last_decl ds
   in
   match !Veluslib.main_node with
-  | Some s -> intern_string s
+  | Some s -> Camlcoq.intern_string s
   | None   -> last_decl decls
 
 (** Incremental parser to reparse the token stream and generate an
@@ -49,6 +41,7 @@ let get_main_node decls =
     calc-incremental example. *)
 
 module I = LustreParser2.MenhirInterpreter
+module Inter = LustreParser.MenhirLibParser.Inter
 
 let rec parsing_loop toks (checkpoint : unit I.checkpoint) =
   match checkpoint with
@@ -56,21 +49,21 @@ let rec parsing_loop toks (checkpoint : unit I.checkpoint) =
     (* The parser needs a token. Request one from the lexer,
        and offer it to the parser, which will produce a new
        checkpoint. Then, repeat. *)
-    let (token, loc) = Relexer.map_token (Streams.hd toks) in
-    let loc = LustreLexer.lexing_loc loc in
+    let token = Relexer.map_token (Inter.buf_head toks) in
+    let loc = LustreLexer.lexing_loc (Relexer.token_loc token) in
     let checkpoint = I.offer checkpoint (token, loc, loc) in
-    parsing_loop (Streams.tl toks) checkpoint
+    parsing_loop (Inter.buf_tail toks) checkpoint
   | I.Shifting _
   | I.AboutToReduce _ ->
     let checkpoint = I.resume checkpoint in
     parsing_loop toks checkpoint
   | I.HandlingError env ->
     (* The parser has suspended itself because of a syntax error. Stop. *)
-    let (token, {LustreAst.ast_fname = fname;
-                 LustreAst.ast_lnum  = lnum;
-                 LustreAst.ast_cnum  = cnum;
-                 LustreAst.ast_bol   = bol }) =
-                  Relexer.map_token (Streams.hd toks)
+    let {LustreAst.ast_fname = fname;
+         LustreAst.ast_lnum  = lnum;
+         LustreAst.ast_cnum  = cnum;
+         LustreAst.ast_bol   = bol }
+      = Relexer.token_loc (Relexer.map_token (Inter.buf_head toks))
     in
     Printf.fprintf stderr "%s:%d:%d: syntax error.\n%!"
       fname lnum (cnum - bol + 1)
@@ -82,7 +75,8 @@ let rec parsing_loop toks (checkpoint : unit I.checkpoint) =
     assert false
 
 let reparse toks =
-  let (_, l) = Relexer.map_token (Streams.hd toks) in
+  (* LustreParser.MenhirLibParser.Inter.buffer *)
+  let l = Relexer.token_loc (Relexer.map_token (Inter.buf_head toks)) in
   parsing_loop toks
     (LustreParser2.Incremental.translation_unit_file (LustreLexer.lexing_loc l))
 
@@ -90,11 +84,11 @@ let reparse toks =
 
 let parse toks =
   Diagnostics.reset();
-  let rec inf = Datatypes.S inf in
-  match LustreParser.translation_unit_file inf toks with
-  | LustreParser.Parser.Inter.Fail_pr -> (reparse toks; exit 1)
-  | LustreParser.Parser.Inter.Timeout_pr -> assert false
-  | LustreParser.Parser.Inter.Parsed_pr (ast, _) ->
+  let log_fuel = Camlcoq.Nat.of_int 50 in
+  match LustreParser.translation_unit_file log_fuel toks with
+  | Inter.Fail_pr -> (reparse toks; exit 1)
+  | Inter.Timeout_pr -> assert false
+  | Inter.Parsed_pr (ast, _) ->
     (Obj.magic ast : LustreAst.declaration list)
 
 let compile source_name filename =
@@ -193,7 +187,7 @@ let _ =
                    else Machine.rv32
     | _         -> assert false
   end;
-  Builtins.set C2C.builtins;
+  Env.set_builtins C2C.builtins;
   (* Cutil.declare_attributes C2C.attributes; *)
   CPragmas.initialize()
 

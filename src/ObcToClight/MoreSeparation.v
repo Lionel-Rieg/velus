@@ -341,7 +341,7 @@ Proof.
     destruct Hf as [HfQ [|HfR]]; [now left|].
     now right.
   - rewrite sep_unwand with (1:=HQdec).
-    rewrite HPQR. reflexivity.
+    apply HPQR.
 Qed.
 
 Lemma sepwand_out:

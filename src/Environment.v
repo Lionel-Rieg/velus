@@ -906,7 +906,7 @@ Module Env.
       forall x v, Env.find x env1 = Some v ->
              exists v', R v v' /\ Env.find x env2 = Some v'.
 
-    Global Typeclasses Opaque refines.
+    Typeclasses Opaque refines.
 
     Lemma refines_empty:
       forall env, refines (empty A) env.
