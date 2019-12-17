@@ -58,8 +58,7 @@ module PrintFun
                   and type cexp  = CE.cexp)
     (PrintOps: PRINT_OPS with type typ   = CE.typ
                           and type const = CE.const
-                          and type unop  = CE.unop
-                          and type binop = CE.binop) :
+                          and type operator  = CE.operator) :
   sig
     val print_trconstr   : formatter -> Stc.trconstr -> unit
     val print_system     : Format.formatter -> Stc.system -> unit
@@ -142,10 +141,10 @@ module PrintFun
 module SchedulerFun
     (CE: Coreexprlib.SYNTAX)
     (Stc: SYNTAX with type clock = CE.clock
-                 and type typ   = CE.typ
-                 and type const = CE.const
-                 and type exp  = CE.exp
-                 and type cexp  = CE.cexp) :
+                  and type typ   = CE.typ
+                  and type const = CE.const
+                  and type exp   = CE.exp
+                  and type cexp  = CE.cexp) :
   sig
     val schedule : ident -> Stc.trconstr list -> BinNums.positive list
   end
@@ -194,9 +193,9 @@ module SchedulerFun
 
     let rec resolve_variable e =
       match e with
-      | Evar (x, _)                   -> Some x
-      | Ewhen (e, _, _)               -> resolve_variable e
-      | Econst _ | Eunop _ | Ebinop _ -> None
+      | Evar (x, _)      -> Some x
+      | Ewhen (e, _, _)  -> resolve_variable e
+      | Econst _ | Eop _ -> None
 
     let grouping_clock_of_tc = function
       (* Push merges/iftes down a level to improve grouping *)
@@ -235,11 +234,10 @@ module SchedulerFun
 
     let add_exp_deps add_dep =
       let rec go = function
-        | Econst _              -> ()
-        | Evar (x, _)           -> add_dep x
-        | Ewhen (e, x, _)       -> add_dep x; go e
-        | Eunop (_, e, _)       -> go e
-        | Ebinop (_, e1, e2, _) -> go e1; go e2
+        | Econst _        -> ()
+        | Evar (x, _)     -> add_dep x
+        | Ewhen (e, x, _) -> add_dep x; go e
+        | Eop (_, el, _)  -> List.iter go el
       in go
 
     let add_cexp_deps add_dep =

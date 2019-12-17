@@ -39,8 +39,7 @@ module type SYNTAX =
 sig
   type typ
   type const
-  type unop
-  type binop
+  type operator
 
   type clock =
     | Cbase
@@ -50,8 +49,7 @@ sig
     | Econst of const
     | Evar of ident * typ
     | Ewhen of exp * ident * bool
-    | Eunop of unop * exp * typ
-    | Ebinop of binop * exp * exp * typ
+    | Eop of operator * exp list * typ
 
   type cexp =
     | Emerge of ident * cexp * cexp
@@ -63,8 +61,7 @@ end
 module PrintFun (CE: SYNTAX)
     (PrintOps : PRINT_OPS with type typ   = CE.typ
                            and type const = CE.const
-                           and type unop  = CE.unop
-                           and type binop = CE.binop) :
+                           and type operator  = CE.operator) :
 sig
   val print_ident         : formatter -> ident -> unit
   val print_exp           : formatter -> CE.exp -> unit
@@ -82,11 +79,10 @@ end
 struct
 
   let lprecedence = function
-    | CE.Econst _ -> (16, NA)
-    | CE.Evar _   -> (16, NA)
-    | CE.Ewhen _  -> (12, LtoR) (* precedence of +/- *)
-    | CE.Eunop  (op, _, _)    -> PrintOps.prec_unop op
-    | CE.Ebinop (op, _, _, _) -> PrintOps.prec_binop op
+    | CE.Econst _       -> (16, NA)
+    | CE.Evar _         -> (16, NA)
+    | CE.Ewhen _        -> (12, LtoR) (* precedence of +/- *)
+    | CE.Eop (op, _, _) -> PrintOps.prec_op op
 
   let cprecedence = function
     | CE.Emerge _ -> (5, LtoR) (* precedence of lor - 1 *)
@@ -114,10 +110,9 @@ struct
           (exp prec') e
           (if v then "" else " not")
           print_ident x
-      | CE.Eunop  (op, e, ty) ->
-        PrintOps.print_unop p op ty (exp prec') e
-      | CE.Ebinop (op, e1, e2, ty) ->
-        PrintOps.print_binop p op ty (exp prec1) e1 (exp prec2) e2
+      | CE.Eop (op, el, ty) ->
+         PrintOps.print_op p op ty (List.map (fun _ -> exp prec1) el) el (* FIXME *)
+      (* PrintOps.print_binop p op ty (exp prec1) e1 (exp prec2) e2 *)
     end;
     if prec' < prec then fprintf p ")@]" else fprintf p "@]"
 

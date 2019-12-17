@@ -21,15 +21,13 @@ module type SYNTAX =
   sig
     type typ
     type const
-    type unop
-    type binop
+    type operator
 
     type exp =
     | Var   of ident * typ
     | State of ident * typ
     | Const of const
-    | Unop  of unop  * exp * typ
-    | Binop of binop * exp * exp * typ
+    | Op    of operator  * exp list * typ
     | Valid of ident * typ
 
     type stmt =
@@ -158,8 +156,7 @@ module SyncFun (Obc: SYNTAX)
 module PrintFun (Obc: SYNTAX)
                 (PrintOps : PRINT_OPS with type typ   = Obc.typ
                                        and type const = Obc.const
-                                       and type unop  = Obc.unop
-                                       and type binop = Obc.binop) :
+                                       and type operator  = Obc.operator) :
   sig
     val print_expr : formatter -> Obc.exp -> unit
     val print_stmt : formatter -> Obc.stmt -> unit
@@ -174,8 +171,7 @@ module PrintFun (Obc: SYNTAX)
       | Obc.Var _   -> (16, NA)
       | Obc.State _ -> (16, NA)
       | Obc.Const _ -> (16, NA)
-      | Obc.Unop (op, _, _)     -> PrintOps.prec_unop op
-      | Obc.Binop (op, _, _, _) -> PrintOps.prec_binop op
+      | Obc.Op (op, _, _)     -> PrintOps.prec_op op
       | Obc.Valid _ -> (16, NA)
 
     let rec expr prec p e =
@@ -194,10 +190,8 @@ module PrintFun (Obc: SYNTAX)
           fprintf p "state(%s)" (extern_atom id)
       | Obc.Const c ->
           PrintOps.print_const p c
-      | Obc.Unop (op, e, ty) ->
-          PrintOps.print_unop p op ty (expr prec') e
-      | Obc.Binop (op, e1, e2, ty) ->
-          PrintOps.print_binop p op ty (expr prec1) e1 (expr prec2) e2
+      | Obc.Op (op, el, ty) ->
+         PrintOps.print_op p op ty (List.map (fun _ -> expr prec') el) el (* FIXME *)
       | Obc.Valid (id, _) ->
           fprintf p "[%s]" (extern_atom id)
       end;

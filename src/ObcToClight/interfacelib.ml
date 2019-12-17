@@ -123,8 +123,7 @@ module PrintClightOpsFun (OpNames : sig
 
     type typ   = Ops.coq_type
     type const = Ops.const
-    type unop  = Ops.unop
-    type binop = Ops.binop
+    type operator  = Ops.operator (* Unary of Ops.unop | Binary of Ops.binop *)
 
     let print_typ p ty = Ops.string_of_type ty |> fmt_coqstring p
 
@@ -154,6 +153,23 @@ module PrintClightOpsFun (OpNames : sig
       fprintf p "%a@ %s %a" print_exp1 e1
                             (OpNames.name_binop ty op)
                             print_exp2 e2
+(*
+    let print_op p op ty print_exps el =
+      match op, el, print_exps with
+      | Unary unop,   [e],      [p_exp]          -> print_unop p unop ty p_exp e
+      | Binary binop, [e1; e2], [p1_exp; p2_exp] -> print_binop p binop ty p1_exp e1 p2_exp e2
+      | _, _, _ -> fprintf p "Operator error: incorrect number of arguments"
+
+    let name_op ty = function
+      | Ops.Unary unop -> OpNames.name_unop ty unop
+      | Ops.Binary binop -> OpNames.name_binop ty binop
+ *)
+    let print_op p op ty print_exps el =
+      try
+        fprintf p "%s(" (* (name_op op) *) "operator"; (* FIXME *)
+        List.iter2 (fprintf p "%a,@ ") print_exps el;
+        fprintf p ")";
+      with Invalid_argument s -> fprintf p "Operator error (%s): incorrect number of arguments" s
 
     let prec_unop op = (15, RtoL)
     let prec_binop =
@@ -166,13 +182,16 @@ module PrintClightOpsFun (OpNames : sig
         | Oand            -> ( 8, LtoR)
         | Oxor            -> ( 7, LtoR)
         | Oor             -> ( 6, LtoR)
+
+    let prec_op = function
+      | Ops.Unary unop -> prec_unop unop
+      | Ops.Binary binop -> prec_binop binop
   end
 
 module Basics = struct
   type typ   = Interface.Op.coq_type
   type const = Interface.Op.const
-  type unop  = Interface.Op.unop
-  type binop = Interface.Op.binop
+  type operator  = Interface.Op.operator
 end
 
 module PrintOps = PrintClightOpsFun (LustreOpNames)

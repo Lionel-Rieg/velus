@@ -51,10 +51,9 @@ module PrintFun
                  and type const = CE.const
                  and type exp   = CE.exp
                  and type cexp  = CE.cexp)
-    (PrintOps: PRINT_OPS with type typ   = CE.typ
-                          and type const = CE.const
-                          and type unop  = CE.unop
-                          and type binop = CE.binop) :
+    (PrintOps: PRINT_OPS with type typ      = CE.typ
+                          and type const    = CE.const
+                          and type operator = CE.operator) :
   sig
     val print_equation   : formatter -> NL.equation -> unit
     val print_node       : Format.formatter -> NL.node -> unit
