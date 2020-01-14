@@ -24,7 +24,8 @@ all: $(VELUS)
 # COMPCERT COQ
 compcert: $(COMPCERTDIR)/Makefile.config
 	@echo "${bold}Building CompCert...${normal}"
-	$(MAKE) $(COMPCERTFLAGS) #compcert.ini driver/Version.ml proof
+	test -f $(COMPCERTDIR)/.depend || $(MAKE) $(COMPCERTFLAGS) depend
+	$(MAKE) $(COMPCERTFLAGS) compcert.ini driver/Version.ml proof extraction
 	@echo "${bold}OK.${normal}"
 
 # LUSTRE PARSER

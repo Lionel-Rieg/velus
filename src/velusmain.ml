@@ -164,28 +164,29 @@ let usage_msg =
 let _ =
   Machine.config:=
     begin match Configuration.arch with
-    | "powerpc" -> if Configuration.model = "e5500" || Configuration.model = "ppc64"
-                   then if Configuration.abi = "linux" then Machine.ppc_32_r64_linux_bigendian
-                   else if Configuration.gnu_toolchain then Machine.ppc_32_r64_bigendian
-                   else Machine.ppc_32_r64_diab_bigendian
-                   else if Configuration.abi = "linux" then Machine.ppc_32_linux_bigendian
-                   else if Configuration.gnu_toolchain then Machine.ppc_32_bigendian
-                   else Machine.ppc_32_diab_bigendian
-    | "arm"     -> if Configuration.is_big_endian
-                   then Machine.arm_bigendian
-                   else Machine.arm_littleendian
-    | "x86"     -> if Configuration.model = "64" then
-                     Machine.x86_64
-                   else
-                     if Configuration.abi = "macosx"
-                     then Machine.x86_32_macosx
-                     else if Configuration.system = "bsd"
-                     then Machine.x86_32_bsd
-                     else Machine.x86_32
-    | "riscV"   -> if Configuration.model = "64"
-                   then Machine.rv64
-                   else Machine.rv32
-    | _         -> assert false
+    | "powerpc"  -> if Configuration.model = "e5500" || Configuration.model = "ppc64"
+                    then if Configuration.abi = "linux" then Machine.ppc_32_r64_linux_bigendian
+                    else if Configuration.gnu_toolchain then Machine.ppc_32_r64_bigendian
+                    else Machine.ppc_32_r64_diab_bigendian
+                    else if Configuration.abi = "linux" then Machine.ppc_32_linux_bigendian
+                    else if Configuration.gnu_toolchain then Machine.ppc_32_bigendian
+                    else Machine.ppc_32_diab_bigendian
+    | "arm"      -> if Configuration.is_big_endian
+                    then Machine.arm_bigendian
+                    else Machine.arm_littleendian
+    | "x86"      -> if Configuration.model = "64" then
+                      Machine.x86_64
+                    else
+                      if Configuration.abi = "macosx"
+                      then Machine.x86_32_macosx
+                      else if Configuration.system = "bsd"
+                      then Machine.x86_32_bsd
+                      else Machine.x86_32
+    | "riscV"    -> if Configuration.model = "64"
+                    then Machine.rv64
+                    else Machine.rv32
+    | "mppa_k1c" -> Machine.mppa_k1c
+    | _          -> assert false
   end;
   Env.set_builtins C2C.builtins;
   (* Cutil.declare_attributes C2C.attributes; *)
