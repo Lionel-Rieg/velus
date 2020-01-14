@@ -48,7 +48,7 @@ do
     KO=$(( KO + 1 ))
     if $VELUS "$f" >/dev/null 2>/tmp/err; then
 	      KO_FAILURE=$(( KO_FAILURE + 1 ))
-        CHECK="${red}OK${normal}"
+        CHECK="${red}OK\n${normal}"
     else
 	      KO_SUCCESS=$(( KO_SUCCESS + 1 ))
         ERR=$(</tmp/err)

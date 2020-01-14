@@ -106,7 +106,12 @@ let add_builtin p (name, (out, ins, b)) =
   let ef =
     if name = "malloc" then AST.EF_malloc else
     if name = "free" then AST.EF_free else
-    if Str.string_match C2C.re_runtime name 0 then AST.EF_runtime(id', sg) else
+    (* if Str.string_match C2C.re_runtime name 0 then AST.EF_runtime(id', sg) else *)
+    if Str.string_match C2C.re_runtime64 name 0
+       || Str.string_match C2C.re_runtime32 name 0
+       || Str.string_match C2C.re_runtimef64 name 0
+       || Str.string_match C2C.re_runtimef32 name 0
+    then AST.EF_runtime(id', sg) else
     if Str.string_match C2C.re_builtin name 0
     && List.mem_assoc name C2C.builtins.builtin_functions
     then AST.EF_builtin(id', sg)

@@ -12,7 +12,7 @@ From Velus Require Import Lustre.Parser.LustreParser.
 From compcert Require
      cfrontend.Initializers cfrontend.Ctyping
      backend.Selection backend.RTLgen
-     driver.Compiler cparser.Cabs.
+     driver.Compiler cparser.Cabs Asmaux.
 
 (* Processor-specific extraction directives *)
 Load extractionMachdep.
@@ -37,18 +37,38 @@ Extract Constant Compopts.propagate_float_constants =>
   "fun _ -> !Clflags.option_ffloatconstprop >= 1".
 Extract Constant Compopts.generate_float_constants =>
   "fun _ -> !Clflags.option_ffloatconstprop >= 2".
+Extract Constant Compopts.optim_duplicate =>
+  "fun _ -> (if !Clflags.option_fduplicate = -1 then false else true)".
 Extract Constant Compopts.optim_tailcalls =>
   "fun _ -> !Clflags.option_ftailcalls".
 Extract Constant Compopts.optim_constprop =>
   "fun _ -> !Clflags.option_fconstprop".
 Extract Constant Compopts.optim_CSE =>
-"fun _ -> !Clflags.option_fcse".
+  "fun _ -> !Clflags.option_fcse".
+Extract Constant Compopts.optim_CSE2 =>
+  "fun _ -> !Clflags.option_fcse2".
 Extract Constant Compopts.optim_redundancy =>
   "fun _ -> !Clflags.option_fredundancy".
+Extract Constant Compopts.optim_postpass =>
+  "fun _ -> !Clflags.option_fpostpass".
+Extract Constant Compopts.optim_globaladdrtmp =>
+  "fun _ -> !Clflags.option_fglobaladdrtmp".
+Extract Constant Compopts.optim_globaladdroffset =>
+  "fun _ -> !Clflags.option_fglobaladdroffset".
+Extract Constant Compopts.optim_xsaddr =>
+  "fun _ -> !Clflags.option_fxsaddr".
+Extract Constant Compopts.optim_coalesce_mem =>
+  "fun _ -> !Clflags.option_fcoalesce_mem".
+Extract Constant Compopts.optim_addx =>
+  "fun _ -> !Clflags.option_faddx".
 Extract Constant Compopts.thumb =>
   "fun _ -> !Clflags.option_mthumb".
 Extract Constant Compopts.debug =>
   "fun _ -> !Clflags.option_g".
+Extract Constant Compopts.all_loads_nontrap =>
+  "fun _ -> !Clflags.option_all_loads_nontrap".
+Extract Constant Compopts.optim_forward_moves =>
+  "fun _ -> !Clflags.option_fforward_moves".
 
 (* Compiler *)
 Extract Constant Compiler.print_Clight => "PrintClight.print_if".
@@ -129,8 +149,7 @@ Extract Constant elab_const_char =>
   "fun loc wide chars ->
     let (v, k) = Elab.elab_char_constant loc wide chars in
     match C2C.convertIkind k Ctypes.noattr with
-    | Ctypes.Tint (sz, sg, _) ->
-	Interface.Op.Cint (C2C.convertInt32 v, sz, sg)
+    | Ctypes.Tint (sz, sg, _) -> Interface.Op.Cint (C2C.convertInt32 v, sz, sg)
     | _ -> assert false".
 
 (* Cabs *)
@@ -172,7 +191,7 @@ Separate Extraction
 	       FMapPositive.PositiveMap.add FMapPositive.PositiveMap.empty
 	       FMapPositive.PositiveMap.find
          Compiler.transf_clight_program Cabs
-         AST.signature_main
+         AST.signature_main Asmaux
          VelusCorrectness.compile elab_declarations translation_unit_file
          Initializers.transl_init
          Ctyping.typecheck_program Ctyping.epostincr Ctyping.epostdecr Ctyping.epreincr Ctyping.epredecr
@@ -183,6 +202,6 @@ Separate Extraction
          Conventions1.dummy_int_reg Conventions1.dummy_float_reg
          Conventions1.int_callee_save_regs Conventions1.int_caller_save_regs
          Conventions1.float_callee_save_regs Conventions1.float_caller_save_regs
-	       Clight.type_of_function.
+	 Clight.type_of_function Compopts.optim_postpass.
 
 Extraction Library Ordered.

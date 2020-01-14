@@ -40,6 +40,11 @@ COMPCERTFLAGS=$(SILENT) -C $(COMPCERTDIR)
 endif
 COMPCERT_INCLUDES=lib cfrontend backend common driver cparser debug $(ARCH)
 
+# Impure library from MPPA-CompCert (only for arch mppa_k1c)
+ifeq ($(ARCH), mppa_k1c)
+COMPCERT_INCLUDES+=mppa_k1c/abstractbb/Impure/ocaml
+endif
+
 PARSERDIR=$(SRC_DIR)/Lustre/Parser
 PARSERFLAGS=$(SILENT) -C $(PARSERDIR)
 
