@@ -57,7 +57,7 @@ Module Type OBCINVARIANTS
       <->
       ~ Can_write_in x s1 /\ ~ Can_write_in x s2.
   Proof.
-    Hint Constructors Can_write_in.
+    Hint Constructors Can_write_in : core.
     intros; split; intro; try (intro HH; inversion_clear HH); intuition.
   Qed.
 
@@ -76,7 +76,7 @@ Module Type OBCINVARIANTS
       <->
       ~ Can_write_in x s1 /\ ~ Can_write_in x s2.
   Proof.
-    Hint Constructors Can_write_in.
+    Hint Constructors Can_write_in : core.
     intros; split; intro; try (intro HH; inversion_clear HH); intuition.
   Qed.
 
@@ -100,7 +100,7 @@ Module Type OBCINVARIANTS
       -> stmt_eval prog me ve s (me', ve')
       -> exp_eval me' ve' e v.
   Proof.
-    Hint Constructors Is_free_in_exp Can_write_in exp_eval.
+    Hint Constructors Is_free_in_exp Can_write_in exp_eval : core.
     induction s; intros me ve me' ve' e' v Hfree Hexp Hstmt.
     - inv Hstmt.
       rewrite <-exp_eval_extend_venv; auto.
@@ -155,7 +155,7 @@ Module Type OBCINVARIANTS
   | NoOSkip:
       No_Overwrites Skip.
 
-  Hint Constructors No_Overwrites.
+  Hint Constructors No_Overwrites : core.
 
   Lemma cannot_write_in_No_Overwrites:
     forall s,
@@ -191,7 +191,7 @@ Module Type OBCINVARIANTS
   | NNVSkip:
       No_Naked_Vars Skip.
 
-  Hint Constructors No_Naked_Vars.
+  Hint Constructors No_Naked_Vars : core.
 
   Lemma stmt_eval_mono':
     forall p,

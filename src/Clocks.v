@@ -195,7 +195,7 @@ Lemma clock_parent_parent':
     clock_parent (Con ck i b) ck'
     -> clock_parent ck ck'.
 Proof.
-  Hint Constructors clock_parent.
+  Hint Constructors clock_parent : core.
   induction ck' as [|? IH]; [now inversion 1|].
   intros ck i' b' Hcp.
   inversion Hcp as [|? ? ? Hcp']; [now auto|].
@@ -207,7 +207,7 @@ Lemma clock_parent_parent:
     clock_parent (Con ck i b) ck'
     -> clock_parent ck (Con ck' i b).
 Proof.
-  Hint Constructors clock_parent.
+  Hint Constructors clock_parent : core.
   destruct ck'; [now inversion 1|].
   intros ck i' b' Hcp.
   inversion Hcp as [|? ? ? Hcp']; [now auto|].
@@ -314,7 +314,7 @@ Lemma Is_free_in_clock_self_or_parent:
     Is_free_in_clock x ck
     -> exists ck' b, ck = Con ck' x b \/ clock_parent (Con ck' x b) ck.
 Proof.
-  Hint Constructors clock_parent.
+  Hint Constructors clock_parent : core.
   induction ck as [|? IH]; [now inversion 1|].
   intro Hfree.
   inversion Hfree as [|? ? ? ? Hfree']; clear Hfree; subst.
@@ -332,7 +332,7 @@ Lemma wc_clock_parent:
     -> wc_clock C ck'
     -> wc_clock C ck.
 Proof.
-  Hint Constructors wc_clock.
+  Hint Constructors wc_clock : core.
   induction ck' as [|ck' IH]; destruct ck as [|ck i' ty'];
   try now (inversion 3 || auto).
   intros Hwc Hp Hck.

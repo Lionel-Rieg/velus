@@ -233,7 +233,7 @@ Hint Resolve
      translate_No_Overwrites
      Obc.Fus.fuse_cannot_write_inputs
      translate_cannot_write_inputs
-.
+  : core.
 
 (** The trace of a NLustre node *)
 Section NLTrace.

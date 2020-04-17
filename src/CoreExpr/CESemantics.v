@@ -179,7 +179,7 @@ environment.
 
   End InstantSemantics.
 
-  Hint Extern 4 (sem_exps_instant _ _ nil nil) => apply Forall2_nil.
+  Hint Extern 4 (sem_exps_instant _ _ nil nil) => apply Forall2_nil : core.
 
   Section InstantAnnotatedSemantics.
 
@@ -215,11 +215,11 @@ environment.
     Definition lift {A B} (sem: bool -> env -> A -> B -> Prop)
                x (ys: stream B): Prop :=
       forall n, sem (bk n) (H n) x (ys n).
-    Hint Unfold lift.
+    Hint Unfold lift : core.
 
     Definition lift' {A B} (sem: env -> A -> B -> Prop) x (ys: stream B): Prop :=
       forall n, sem (H n) x (ys n).
-    Hint Unfold lift'.
+    Hint Unfold lift' : core.
 
     Definition sem_clock (ck: clock) (xs: stream bool): Prop :=
       lift sem_clock_instant ck xs.

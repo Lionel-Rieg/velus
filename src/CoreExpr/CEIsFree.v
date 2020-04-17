@@ -94,7 +94,7 @@ Module Type CEISFREE
 
   Hint Constructors Is_free_in_clock Is_free_in_exp
        Is_free_in_aexp Is_free_in_aexps Is_free_in_cexp
-       Is_free_in_caexp.
+       Is_free_in_caexp : core.
 
   (** * Decision procedure *)
 
@@ -269,7 +269,7 @@ Module Type CEISFREE
       PS.In x (fold_left (fun fvs e => free_in_exp e fvs) l m) <->
       Exists (Is_free_in_exp x) l \/ PS.In x m.
   Proof.
-    Local Hint Constructors Exists.
+    Local Hint Constructors Exists : core.
     intros x l. induction l; intro m; simpl.
     - intuition.
       match goal with H:Exists _ nil |- _ => inversion H end.

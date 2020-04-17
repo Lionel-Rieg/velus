@@ -62,7 +62,7 @@ Module Type ISDEFINED
 
   (** ** Properties *)
 
-  Hint Constructors Is_defined_in_eq.
+  Hint Constructors Is_defined_in_eq : core.
 
   Lemma not_Is_defined_in_eq_EqDef:
     forall x i ck ce,

@@ -290,7 +290,7 @@ Module Type NL2STCTYPING
       eapply not_Is_variable_in_memories; eauto.
       apply NoDup_defs_node.
   Qed.
-  Hint Resolve translate_node_wt.
+  Hint Resolve translate_node_wt : core.
 
   Theorem translate_wt:
     forall G,

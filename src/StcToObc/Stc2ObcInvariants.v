@@ -188,7 +188,7 @@ Module Type STC2OBCINVARIANTS
     revert Hf; generalize Skip.
     induction mems as [|(x, (c, ck))]; intros s Hf; simpl; auto.
   Qed.
-  Hint Resolve reset_mems_Fusible.
+  Hint Resolve reset_mems_Fusible : core.
 
   Lemma reset_insts_Fusible:
     forall blocks,
@@ -199,7 +199,7 @@ Module Type STC2OBCINVARIANTS
     revert Hf; generalize Skip.
     induction blocks as [|(x, f)]; intros s Hf; simpl; auto.
   Qed.
-  Hint Resolve reset_insts_Fusible.
+  Hint Resolve reset_insts_Fusible : core.
 
   Theorem ClassFusible_translate:
     forall P,

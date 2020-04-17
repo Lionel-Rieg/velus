@@ -177,8 +177,8 @@ Section EqualVelusMemory.
 End EqualVelusMemory.
 
 Existing Instance equal_memory_rel.
-Hint Immediate equal_memory_rel_Reflexive.
-Hint Immediate equal_memory_rel_Transitive.
+Hint Immediate equal_memory_rel_Reflexive : core.
+Hint Immediate equal_memory_rel_Transitive : core.
 
 Add Parametric Morphism V: (@values V)
     with signature equal_memory ==> Env.Equal

@@ -55,10 +55,10 @@ Import OpAux.
 Open Scope list_scope.
 Open Scope sep_scope.
 Open Scope Z.
-Hint Constructors Clight.eval_lvalue Clight.eval_expr.
-Hint Resolve  Clight.assign_loc_value.
+Hint Constructors Clight.eval_lvalue Clight.eval_expr : core.
+Hint Resolve  Clight.assign_loc_value : core.
 
-Hint Resolve Z.divide_refl.
+Hint Resolve Z.divide_refl : core.
 
 (*****************************************************************)
 (** simple occurence predicate                                  **)
@@ -74,7 +74,7 @@ Inductive occurs_in: stmt -> stmt -> Prop :=
 | occurs_comp: forall s s1 s2,
     occurs_in s s1 \/ occurs_in s s2 ->
     occurs_in s (Comp s1 s2).
-Hint Resolve occurs_refl.
+Hint Resolve occurs_refl : core.
 
 Remark occurs_in_ite:
   forall e s1 s2 s,
@@ -99,7 +99,7 @@ Proof.
   - left; auto.
   - right; auto.
 Qed.
-Hint Resolve occurs_in_ite occurs_in_comp.
+Hint Resolve occurs_in_ite occurs_in_comp : core.
 
 Lemma occurs_in_wt:
   forall s s' p insts mems vars,
@@ -173,8 +173,8 @@ Section PRESERVATION.
   Opaque sepconj.
 
 
-  Hint Resolve wt_val_load_result.
-  Hint Constructors wt_stmt.
+  Hint Resolve wt_val_load_result : core.
+  Hint Constructors wt_stmt : core.
 
   Section MatchStates.
 
@@ -451,7 +451,7 @@ Section PRESERVATION.
           Clight.eval_exprlist tge e le m es'
                                (list_type_to_typelist (map Clight.typeof es')) vs.
       Proof.
-        Hint Constructors Clight.eval_exprlist.
+        Hint Constructors Clight.eval_exprlist : core.
         intros * WF EV; subst es'.
         induction EV; inv WF; econstructor;
           ((eapply expr_correct; eauto)
@@ -461,7 +461,7 @@ Section PRESERVATION.
 
     End ExprCorrectness.
 
-    Hint Resolve exprs_correct.
+    Hint Resolve exprs_correct : core.
 
     Section AssignCorrectness.
 
@@ -1292,7 +1292,7 @@ Section PRESERVATION.
     find_main_step _ _ _ _ _ TRANSL.
   Definition find_main_reset: find_method reset c_main.(c_methods) = Some main_reset :=
     find_main_reset _ _ _ _ _ TRANSL.
-  Hint Resolve find_main_class find_main_step find_main_reset.
+  Hint Resolve find_main_class find_main_step find_main_reset : core.
 
   Lemma bounded_main_class:
     bounded_struct_of_class tge c_main Ptrofs.zero.
@@ -1307,7 +1307,7 @@ Section PRESERVATION.
     destruct (co_alignof_two_p co) as (?&->).
     apply two_power_nat_pos.
   Qed.
-  Hint Resolve bounded_main_class.
+  Hint Resolve bounded_main_class : core.
 
   Lemma reset_correct:
     forall me0,
@@ -1673,7 +1673,7 @@ Section PRESERVATION.
       unfold prefix_fun in Hget.
       apply prefix_injective in Hget as (?&?); auto using fun_id_valid, out_valid.
     Qed.
-    Hint Resolve out_step_env_no_prefix_fun.
+    Hint Resolve out_step_env_no_prefix_fun : core.
 
     Let step_name := Evar (prefix_fun main_node step).
     Let self_addr := Eaddrof (Evar (glob_id self) (type_of_inst main_node))
@@ -1691,7 +1691,7 @@ Section PRESERVATION.
       apply eval_Evar_global; eauto.
       apply out_step_env_no_glob_id; auto; apply self_valid.
     Qed.
-    Hint Resolve eval_expr_self.
+    Hint Resolve eval_expr_self : core.
 
     Hypothesis Hwt_ins  : forall n, wt_vals (ins n) main_step.(m_in).
     Hypothesis Hwt_outs : forall n, wt_vals (outs n) main_step.(m_out).

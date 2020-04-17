@@ -149,7 +149,7 @@ Module Type TRANSLATION
   Definition translate_reset (b: system) : stmt :=
     Comp (reset_mems b.(s_lasts)) (reset_insts b.(s_subs)).
 
-  Hint Constructors NoDupMembers.
+  Hint Constructors NoDupMembers : core.
 
   Program Definition reset_method (b: system) : method :=
     {| m_name := reset;

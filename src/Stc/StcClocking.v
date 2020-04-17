@@ -109,9 +109,9 @@ Module Type STCCLOCKING
       forall s xs ck rst f es,
       Has_clock_tc ck (TcCall s xs ck rst f es).
 
-  Hint Constructors wc_clock wc_exp wc_cexp wc_trconstr wc_program.
-  Hint Unfold wc_env wc_system.
-  Hint Resolve Forall_nil.
+  Hint Constructors wc_clock wc_exp wc_cexp wc_trconstr wc_program : core.
+  Hint Unfold wc_env wc_system : core.
+  Hint Resolve Forall_nil : core.
 
   Instance wc_trconstr_Proper:
     Proper (@eq program ==> @Permutation (ident * clock) ==> @eq trconstr ==> iff)

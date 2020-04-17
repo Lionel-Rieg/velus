@@ -193,7 +193,7 @@ Module Type OBCTYPING
   Definition wt_env (ve: venv) (vars: list (ident * type)) :=
     Forall (wt_venv_val ve) vars.
 
-  Hint Unfold wt_env.
+  Hint Unfold wt_env : core.
 
   Inductive wt_mem : menv -> program -> class -> Prop :=
   | WTmenv: forall me p cl,
@@ -279,7 +279,7 @@ Module Type OBCTYPING
       apply WTminst_empty.
       apply find_inst_gempty.
   Qed.
-  Hint Resolve wt_vempty wt_mempty.
+  Hint Resolve wt_vempty wt_mempty : core.
 
   Lemma venv_find_wt_val:
     forall vars ve x ty v,
@@ -358,7 +358,7 @@ Module Type OBCTYPING
     inv WT_mem.
     eapply pres_sem_exp with (vars:=vars); eauto.
   Qed.
-  Hint Resolve pres_sem_exp'.
+  Hint Resolve pres_sem_exp' : core.
 
   Lemma pres_sem_expo:
     forall mems vars me ve e vo,
@@ -381,7 +381,7 @@ Module Type OBCTYPING
   Proof.
     intros. destruct vo; simpl; eauto.
   Qed.
-  Hint Resolve pres_sem_expo'.
+  Hint Resolve pres_sem_expo' : core.
 
   Lemma pres_sem_exps:
     forall prog c vars me ve es vos,
@@ -396,7 +396,7 @@ Module Type OBCTYPING
       apply Forall_forall with (1:=Hf) in Hi end.
     eapply pres_sem_expo'; eauto.
   Qed.
-  Hint Resolve pres_sem_exps.
+  Hint Resolve pres_sem_exps : core.
 
   Lemma wt_venv_val_add:
     forall env v x y ty,
@@ -444,7 +444,7 @@ Module Type OBCTYPING
         contradiction.
       + apply IHvars; auto.
   Qed.
-  Hint Resolve wt_env_add.
+  Hint Resolve wt_env_add : core.
 
   Lemma wt_mem_inst_add_val:
     forall p o c x v me,
@@ -471,7 +471,7 @@ Module Type OBCTYPING
       eapply wt_mem_inst_add_val.
       eapply Forall_forall in Hin; eauto.
   Qed.
-  Hint Resolve wt_mem_add_val.
+  Hint Resolve wt_mem_add_val : core.
 
   Corollary wt_state_add:
     forall prog me ve c vars x v t,
@@ -483,7 +483,7 @@ Module Type OBCTYPING
   Proof.
     intros * (?&?) ???; split; eauto.
   Qed.
-  Hint Resolve wt_state_add.
+  Hint Resolve wt_state_add : core.
 
   Corollary wt_state_adds:
     forall xs prog me ve c vars vs (xts: list (ident * type)),
@@ -497,7 +497,7 @@ Module Type OBCTYPING
     induction xs; inversion 3; inversion 1; inversion 1; subst; auto.
     rewrite Env.adds_cons_cons; eauto.
   Qed.
-  Hint Resolve wt_state_adds.
+  Hint Resolve wt_state_adds : core.
 
   Corollary wt_state_adds_opt:
     forall xs prog me ve c vars vs (xts: list (ident * type)),
@@ -510,7 +510,7 @@ Module Type OBCTYPING
   Proof.
     intros; rewrite Env.adds_opt_is_adds; eauto.
   Qed.
-  Hint Resolve wt_state_adds_opt.
+  Hint Resolve wt_state_adds_opt : core.
 
   Corollary wt_state_add_val:
      forall prog me ve c vars x v t,
@@ -521,7 +521,7 @@ Module Type OBCTYPING
   Proof.
     intros * (?&?) ??; split; eauto.
   Qed.
-  Hint Resolve wt_state_add_val.
+  Hint Resolve wt_state_add_val : core.
 
   Lemma wt_mem_inst_add_inst_neq:
     forall p o c x me_x me,
@@ -568,7 +568,7 @@ Module Type OBCTYPING
       eapply wt_mem_inst_add_inst_eq; eauto.
     - apply wt_mem_inst_add_inst_neq; auto.
   Qed.
-  Hint Resolve wt_mem_add_inst.
+  Hint Resolve wt_mem_add_inst : core.
 
   Corollary wt_state_add_inst:
      forall prog me ve c c' prog' vars x me_x c_x,
@@ -580,7 +580,7 @@ Module Type OBCTYPING
   Proof.
     intros * (?&?) ??; split; eauto.
   Qed.
-  Hint Resolve wt_state_add_inst.
+  Hint Resolve wt_state_add_inst : core.
 
   Lemma wt_venv_val_remove:
     forall env x y ty,
@@ -605,7 +605,7 @@ Module Type OBCTYPING
     split; [|now apply IHvars].
     now apply wt_venv_val_remove.
   Qed.
-  Hint Resolve wt_env_remove.
+  Hint Resolve wt_env_remove : core.
 
   Lemma wt_env_adds_opt:
     forall vars env ys outs rvs,
@@ -629,7 +629,7 @@ Module Type OBCTYPING
     - rewrite Env.adds_opt_cons_cons_None; auto.
       eapply IHys; eauto.
   Qed.
-  Hint Resolve wt_env_adds_opt.
+  Hint Resolve wt_env_adds_opt : core.
 
   Lemma wt_params:
     forall vos xs es,
@@ -642,7 +642,7 @@ Module Type OBCTYPING
     constructor; eauto.
     now rewrite <- E.
   Qed.
-  Hint Resolve wt_params.
+  Hint Resolve wt_params : core.
 
   Lemma wt_env_params:
     forall vos callee,
@@ -678,7 +678,7 @@ Module Type OBCTYPING
       unfold wt_venv_val; simpl.
       rewrite Env.find_In_gsso_opt, Env.gempty; auto.
   Qed.
-  Hint Resolve wt_env_params.
+  Hint Resolve wt_env_params : core.
 
   Lemma wt_env_params_exprs:
     forall vos callee es,
@@ -689,7 +689,7 @@ Module Type OBCTYPING
     intros * Wt Eq.
     eapply wt_env_params, wt_params; eauto.
   Qed.
-  Hint Resolve wt_env_params_exprs.
+  Hint Resolve wt_env_params_exprs : core.
 
   Lemma pres_sem_stmt':
     (forall p me ve stmt e',
@@ -928,7 +928,7 @@ Module Type OBCTYPING
   Proof.
     intro; rewrite <-app_nil_l; constructor.
   Qed.
-  Hint Resolve suffix_refl.
+  Hint Resolve suffix_refl : core.
 
   Add Parametric Relation: program suffix
       reflexivity proved by suffix_refl
@@ -1000,7 +1000,7 @@ Module Type OBCTYPING
     - eright; eauto.
       eapply find_class_sub_same; eauto.
   Qed.
-  Hint Resolve wt_mem_inst_sub.
+  Hint Resolve wt_mem_inst_sub : core.
 
   Lemma wt_mem_sub:
     forall prog prog' c mem,
@@ -1015,7 +1015,7 @@ Module Type OBCTYPING
     constructor; eauto.
   Qed.
 
-  Hint Constructors suffix.
+  Hint Constructors suffix : core.
 
   Lemma stmt_call_eval_suffix:
     forall p p' me clsid f vs ome rvs,
@@ -1029,7 +1029,7 @@ Module Type OBCTYPING
     econstructor; eauto.
     eapply find_class_sub_same; eauto.
   Qed.
-  Hint Resolve stmt_call_eval_suffix.
+  Hint Resolve stmt_call_eval_suffix : core.
 
   Lemma stmt_eval_suffix:
     forall p p' me ve s S,
@@ -1041,7 +1041,7 @@ Module Type OBCTYPING
     intros * Ev ? ?.
     induction Ev; econstructor; eauto.
   Qed.
-  Hint Resolve stmt_eval_suffix.
+  Hint Resolve stmt_eval_suffix : core.
 
   Lemma find_class_chained:
     forall prog c1 c2 cls prog' cls' prog'',
@@ -1099,7 +1099,7 @@ Module Type OBCTYPING
     eapply wt_mem_sub; eauto.
     eapply find_class_sub; eauto.
   Qed.
-  Hint Resolve wt_mem_chained.
+  Hint Resolve wt_mem_chained : core.
 
   Lemma wt_mem_skip:
     forall prog prog' cid c mem,
@@ -1124,7 +1124,7 @@ Module Type OBCTYPING
       simpl in Find; cases_eqn E.
       apply ident_eqb_eq in E; congruence.
   Qed.
-  Hint Resolve wt_mem_skip.
+  Hint Resolve wt_mem_skip : core.
 
   Lemma find_class_rev:
     forall prog n c prog',

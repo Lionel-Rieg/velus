@@ -61,7 +61,7 @@ Module Type STCISFREE
 
   Hint Constructors Is_free_in_clock Is_free_in_exp
        Is_free_in_aexp Is_free_in_aexps Is_free_in_cexp
-       Is_free_in_caexp Is_free_in_tc.
+       Is_free_in_caexp Is_free_in_tc : core.
 
   Lemma free_in_tc_spec:
     forall x tc m,

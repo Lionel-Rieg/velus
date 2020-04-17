@@ -58,7 +58,7 @@ Module Type OBCSEMANTICS
     now rewrite Env.gempty.
   Qed.
 
-  Hint Unfold vempty.
+  Hint Unfold vempty : core.
 
   (* Function call arguments either evaluate fully (i.e., to Some value), or
      they are undefined variables in [menv] or [env] (i.e., None). The idea
@@ -360,7 +360,7 @@ Module Type OBCSEMANTICS
 
 (*
 Proof.
-    Hint Constructors stmt_eval.
+    Hint Constructors stmt_eval : core.
     induction xs.
     - split; [ now eauto | ].
       intro H; do 2 destruct H.

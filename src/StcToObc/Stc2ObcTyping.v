@@ -93,7 +93,7 @@ Module Type STC2OBCTYPING
       - constructor; auto; now rewrite typeof_correct.
       - constructor; auto; now rewrite 2 typeof_correct.
     Qed.
-    Hint Resolve translate_exp_wt.
+    Hint Resolve translate_exp_wt : core.
 
     Corollary translate_arg_wt:
       forall e clkvars ck,
@@ -105,7 +105,7 @@ Module Type STC2OBCTYPING
       apply NvarsSpec in H; destruct (PS.mem x memset); simpl; auto using wt_exp.
       cases; auto using wt_exp.
     Qed.
-    Hint Resolve translate_arg_wt.
+    Hint Resolve translate_arg_wt : core.
 
     Remark typeof_bool_var_is_bool_type:
       forall x,
@@ -113,7 +113,7 @@ Module Type STC2OBCTYPING
     Proof.
       unfold bool_var; intros; simpl; cases.
     Qed.
-    Hint Resolve typeof_bool_var_is_bool_type.
+    Hint Resolve typeof_bool_var_is_bool_type : core.
 
     Lemma translate_cexp_wt:
       forall p insts x e,
@@ -144,7 +144,7 @@ Module Type STC2OBCTYPING
     Qed.
 
   End Expressions.
-  Hint Resolve translate_exp_wt translate_cexp_wt Control_wt.
+  Hint Resolve translate_exp_wt translate_cexp_wt Control_wt : core.
 
   Lemma step_wt:
     forall P s,
@@ -235,7 +235,7 @@ Module Type STC2OBCTYPING
       + clear - Exps NvarsSpec; induction Exps; simpl; constructor; eauto.
         eapply translate_arg_wt; eauto.
   Qed.
-  Hint Resolve step_wt.
+  Hint Resolve step_wt : core.
 
   Lemma reset_mems_wt:
     forall P insts mems lasts,
@@ -309,7 +309,7 @@ Module Type STC2OBCTYPING
     - apply reset_insts_wt; auto.
       apply incl_refl.
   Qed.
-  Hint Resolve reset_wt.
+  Hint Resolve reset_wt : core.
 
   Lemma translate_system_wt:
     forall P s,
@@ -324,7 +324,7 @@ Module Type STC2OBCTYPING
     inversion_clear WTtc as [| | |???????? Find].
     apply find_system_translate in Find as (?&?& -> &?); discriminate.
   Qed.
-  Hint Resolve translate_system_wt.
+  Hint Resolve translate_system_wt : core.
 
   Theorem translate_wt:
     forall P,

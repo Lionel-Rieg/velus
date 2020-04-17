@@ -1068,8 +1068,8 @@ Section ORel.
 End ORel.
 
 Arguments orel {A}%type R%signature.
-Hint Extern 4 (orel _ None None) => now constructor.
-Hint Extern 5 (orel _ ?x ?x) => reflexivity.
+Hint Extern 4 (orel _ None None) => now constructor : core.
+Hint Extern 5 (orel _ ?x ?x) => reflexivity : core.
 
 Lemma orel_eq {A : Type} :
   forall x y, orel (@eq A) x y <-> x = y.
@@ -1161,6 +1161,7 @@ Definition obind2 {A B C: Type} (f: option (A * B)) (g: A -> B -> option C) : op
   | None => None
   end.
 
+Declare Scope option_monad_scope.
 Notation "'do' X <- A ; B" := (obind A (fun X => B))
                                 (at level 200, X ident, A at level 100, B at level 200)
                               : option_monad_scope.

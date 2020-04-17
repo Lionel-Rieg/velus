@@ -31,7 +31,7 @@ From Coq Require Import ZArith.BinInt.
 Open Scope bool_scope.
 (* Interface avec CompCert *)
 
-Hint Resolve Z.divide_refl.
+Hint Resolve Z.divide_refl : core.
 
 Definition empty_composite_env : Ctypes.composite_env := (Maps.PTree.empty _).
 
@@ -258,8 +258,8 @@ Module Export Op <: OPERATORS.
 
   Definition wt_val : val -> type -> Prop := wt_val'.
 
-  Hint Unfold wt_val.
-  Hint Constructors wt_val'.
+  Hint Unfold wt_val : core.
+  Hint Constructors wt_val' : core.
 
   Lemma wt_val_bool:
     forall v, (v = true_val \/ v = false_val) <-> wt_val v bool_type.
@@ -387,7 +387,7 @@ Module Export Op <: OPERATORS.
 
   Local Hint Immediate good_bool_vtrue good_bool_vfalse good_bool_vlong
         good_bool_vfloat good_bool_vsingle good_bool_tlong
-        good_bool_tfloat.
+        good_bool_tfloat : core.
 
   Lemma good_bool_not_bool:
     forall v ty,
@@ -400,7 +400,7 @@ Module Export Op <: OPERATORS.
     now contradiction (Hty s a).
   Qed.
 
-  Local Hint Resolve good_bool_not_bool.
+  Local Hint Resolve good_bool_not_bool : core.
 
   Opaque good_bool.
 
@@ -413,7 +413,7 @@ Module Export Op <: OPERATORS.
     intros * Hgb Hsz; subst; inversion_clear Hgb; auto.
   Qed.
 
-  Local Hint Resolve good_bool_zero_or_one.
+  Local Hint Resolve good_bool_zero_or_one : core.
 
   Lemma wt_val_Vfalse_bool_type:
     wt_val (Values.Vfalse) bool_type.
@@ -427,7 +427,7 @@ Module Export Op <: OPERATORS.
     constructor; unfold Ctyping.wt_int; [now vm_compute|intuition].
   Qed.
 
-  Local Hint Resolve wt_val_Vfalse_bool_type wt_val_Vtrue_bool_type.
+  Local Hint Resolve wt_val_Vfalse_bool_type wt_val_Vtrue_bool_type : core.
 
   Lemma wt_val_of_bool_bool_type:
     forall v,
@@ -436,7 +436,7 @@ Module Export Op <: OPERATORS.
     destruct v; simpl; auto.
   Qed.
 
-  Local Hint Resolve wt_val_of_bool_bool_type.
+  Local Hint Resolve wt_val_of_bool_bool_type : core.
 
   Lemma typecl_wt_val_wt_val:
     forall cty ty v,
@@ -1077,7 +1077,7 @@ Module Export Op <: OPERATORS.
 
 End Op.
 
-Hint Resolve cltype_access_by_value cltype_align wt_val_load_result sem_cast_same.
+Hint Resolve cltype_access_by_value cltype_align wt_val_load_result sem_cast_same : core.
 
 Module OpAux := OperatorsAux Op.
 
@@ -1094,7 +1094,7 @@ Proof.
   - apply OpAux.val_to_bool_false' in Vtb; subst; simpl.
     rewrite Int.eq_true; auto.
 Qed.
-Hint Resolve val_to_bool_bool_val.
+Hint Resolve val_to_bool_bool_val : core.
 
 From Velus Require Import IndexedStreams.
 From Velus Require Import CoindStreams.

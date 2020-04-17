@@ -46,7 +46,7 @@ Module Type CORRECTNESS
   | EqA:
       forall v,
         eq_if_present absent v.
-  Hint Constructors eq_if_present.
+  Hint Constructors eq_if_present : core.
 
   Definition value_to_option (v: value) : option val :=
     match v with
@@ -83,7 +83,7 @@ Module Type CORRECTNESS
   Tactic Notation "weaken_equiv_env" :=
     weaken_equiv_env with now (constructor; auto).
 
-  Hint Extern 4 (equiv_env _ _ _ _ _) => weaken_equiv_env.
+  Hint Extern 4 (equiv_env _ _ _ _ _) => weaken_equiv_env : core.
 
   Lemma eq_if_present_present:
     forall vo c,
@@ -126,7 +126,7 @@ Module Type CORRECTNESS
         val_to_bool v = Some b ->
         Is_absent_in mems me ve (Con ck x (negb b)).
 
-  Hint Constructors Is_present_in Is_absent_in.
+  Hint Constructors Is_present_in Is_absent_in : core.
 
   Lemma stmt_eval_Control_fwd:
     forall prog me ve mems ck s me' ve',
@@ -163,7 +163,7 @@ Module Type CORRECTNESS
           stmt_eval prog me ve s (me', ve') ->
           stmt_eval prog me ve (Control mems ck s) (me', ve')).
   Proof.
-    Hint Constructors stmt_eval.
+    Hint Constructors stmt_eval : core.
     intros; revert s; induction ck; split; auto.
     - inversion 1.
     - inversion_clear 1 as [??? Hp|???? Hp]; simpl;
@@ -213,7 +213,7 @@ Module Type CORRECTNESS
       - econstructor; eauto; now rewrite typeof_correct.
       - econstructor; eauto; now rewrite 2 typeof_correct.
     Qed.
-    Hint Resolve exp_correct.
+    Hint Resolve exp_correct : core.
 
     Lemma arg_correct:
       forall me ve mems cvars ck e c,
@@ -228,7 +228,7 @@ Module Type CORRECTNESS
       inv Heval; cases.
       take (Env.find _ _ = _) and rewrite it; constructor; auto.
     Qed.
-    Hint Resolve arg_correct.
+    Hint Resolve arg_correct : core.
 
     Lemma cexp_correct:
       forall e c prog x,
@@ -255,7 +255,7 @@ Module Type CORRECTNESS
         + simpl; auto.
       - econstructor; eauto; cases.
     Qed.
-    Hint Resolve cexp_correct.
+    Hint Resolve cexp_correct : core.
 
     Lemma clock_correct_true:
       forall base ck,

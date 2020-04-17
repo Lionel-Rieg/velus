@@ -480,7 +480,7 @@ Section Nodup.
       NoDup (xs ++ ys) ->
       NoDup xs.
   Proof.
-    Hint Constructors NoDup.
+    Hint Constructors NoDup : core.
     intros * Hndup.
     induction xs as [|x xs]; auto.
     inversion_clear Hndup as [|? ? Hnin Hndup'].
@@ -911,7 +911,7 @@ Section Permutation.
   Global Instance Permutation_filter_Proper (p:A->bool):
     Proper (@Permutation A ==> @Permutation A) (filter p).
   Proof.
-    Hint Constructors Permutation.
+    Hint Constructors Permutation : core.
     intros xs ys Hperm.
     induction Hperm; simpl; auto.
     - destruct (p x); auto.

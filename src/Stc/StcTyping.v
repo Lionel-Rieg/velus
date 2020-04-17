@@ -81,7 +81,7 @@ Module Type STCTYPING
         Forall (fun s' => s.(s_name) <> s'.(s_name))%type P ->
         wt_program (s :: P).
 
-  Hint Constructors wt_clock wt_exp wt_cexp wt_trconstr wt_program.
+  Hint Constructors wt_clock wt_exp wt_cexp wt_trconstr wt_program : core.
 
   Instance wt_trconstr_Proper:
     Proper (@eq program ==> @Permutation.Permutation (ident * type)

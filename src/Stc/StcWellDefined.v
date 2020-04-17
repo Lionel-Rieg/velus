@@ -379,7 +379,7 @@ Module Type STCWELLDEFINED
       intros * x y E.
       apply pair_tc in E; subst; auto.
     Qed.
-    Hint Resolve PNS_compat.
+    Hint Resolve PNS_compat : core.
 
     Lemma PNS_not_for_all_spec:
       forall (s : PNS.t) (f : positive * nat -> bool),
@@ -434,7 +434,7 @@ Module Type STCWELLDEFINED
       rewrite Htc.
       reflexivity.
     Qed.
-    Hint Resolve check_var_compat.
+    Hint Resolve check_var_compat : core.
 
     Lemma not_well_sch_vars_defs_spec:
       forall tcs args defs vars tc,

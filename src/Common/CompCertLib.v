@@ -469,7 +469,7 @@ Proof.
     [destruct i, s, a|destruct s, a|destruct f, a|];
     injection 1; intros; subst; reflexivity.
 Qed.
-Hint Resolve sizeof_by_value.
+Hint Resolve sizeof_by_value : core.
 
 Lemma set_comm:
   forall {A} x x' (v v': A) m,

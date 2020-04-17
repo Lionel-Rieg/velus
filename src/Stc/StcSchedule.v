@@ -396,7 +396,7 @@ Module Type STCSCHEDULE
     apply Insts in Hin as (?&?&?).
     eexists; intuition; eauto.
   Qed.
-  Hint Resolve scheduler_initial_state.
+  Hint Resolve scheduler_initial_state : core.
 
   Lemma scheduler_state_closed:
     forall S P f,
@@ -411,7 +411,7 @@ Module Type STCSCHEDULE
     apply Insts in Hin as (?&?&?).
     eexists; intuition; eauto.
   Qed.
-  Hint Resolve scheduler_state_closed.
+  Hint Resolve scheduler_state_closed : core.
 
   Theorem scheduler_sem_system:
     forall P f xs S S' ys,

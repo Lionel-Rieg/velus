@@ -183,7 +183,7 @@ Section Staterep.
        destruct (field_offset ge x (make_members cls))); auto.
   Qed.
 
-  Hint Resolve decidable_footprint_staterep footprint_perm_staterep.
+  Hint Resolve decidable_footprint_staterep footprint_perm_staterep : core.
 
 End Staterep.
 
@@ -331,7 +331,7 @@ Section StateRepProperties.
       inv Hnodup; auto.
   Qed.
 
-  Hint Resolve Z.divide_trans.
+  Hint Resolve Z.divide_trans : core.
 
   Lemma range_staterep:
     forall b clsnm,
@@ -804,7 +804,7 @@ Section Fieldsrep.
 
 End Fieldsrep.
 
-Hint Resolve footprint_perm_fieldsrep footprint_decidable_fieldsrep.
+Hint Resolve footprint_perm_fieldsrep footprint_decidable_fieldsrep : core.
 
 Section SubRep.
 
@@ -932,7 +932,7 @@ Section SubRep.
         intro; apply Notin; now right.
   Qed.
 
-  Hint Resolve decidable_footprint_subrep_inst decidable_subrep footprint_perm_subrep_inst.
+  Hint Resolve decidable_footprint_subrep_inst decidable_subrep footprint_perm_subrep_inst : core.
 
   Lemma range_wand_equiv:
     forall e,
@@ -1269,7 +1269,7 @@ Section MatchStates.
   Proof.
     unfold bounded_struct_of_class, struct_in_bounds; tauto.
   Qed.
-  Hint Resolve bounded_struct_of_class_ge0.
+  Hint Resolve bounded_struct_of_class_ge0 : core.
 
   Definition selfrep (p: program) (c: class) (me: menv) (le: Clight.temp_env) (sb: block) (sofs: ptrofs) : massert :=
     pure (le ! self = Some (Vptr sb sofs))
@@ -2024,4 +2024,4 @@ Section MainProgram.
 
 End MainProgram.
 
-Hint Resolve match_states_wt_state bounded_struct_of_class_ge0.
+Hint Resolve match_states_wt_state bounded_struct_of_class_ge0 : core.

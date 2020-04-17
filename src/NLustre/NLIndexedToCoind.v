@@ -312,7 +312,7 @@ Module Type NLINDEXEDTOCOIND
         CESem.sem_var H x xs ->
         CoInd.sem_var (tr_history H) x (tr_stream xs).
     Proof. apply sem_var_impl_from. Qed.
-    Hint Resolve sem_var_impl_from sem_var_impl.
+    Hint Resolve sem_var_impl_from sem_var_impl : core.
 
     (** An inversion principle for [sem_vars]. *)
     Lemma sem_vars_inv_from:
@@ -376,7 +376,7 @@ Module Type NLINDEXEDTOCOIND
       CESem.sem_vars H xs xss ->
       Forall2 (CoInd.sem_var (tr_history H)) xs (tr_streams xss).
     Proof. apply sem_vars_impl_from. Qed.
-    Hint Resolve sem_vars_impl_from sem_vars_impl.
+    Hint Resolve sem_vars_impl_from sem_vars_impl : core.
 
     (** ** exp level synchronous operators inversion principles
 
@@ -570,14 +570,14 @@ Module Type NLINDEXEDTOCOIND
           rewrite init_from_tl, tr_history_from_tl; auto.
           rewrite Bool.negb_involutive; auto.
     Qed.
-    Hint Resolve sem_clock_impl_from.
+    Hint Resolve sem_clock_impl_from : core.
 
     Corollary sem_clock_impl:
       forall H b ck bs,
         CESem.sem_clock b H ck bs ->
         CoInd.sem_clock (tr_history H) (tr_stream b) ck (tr_stream bs).
     Proof. intros; apply sem_clock_impl_from; auto. Qed.
-    Hint Resolve sem_clock_impl.
+    Hint Resolve sem_clock_impl : core.
 
     (** ** Semantics of exps *)
 
@@ -595,7 +595,7 @@ Module Type NLINDEXEDTOCOIND
 
     (** State the correspondence for [exp].
         Goes by induction on [exp] and uses the previous inversion lemmas. *)
-    Hint Constructors when lift1 lift2.
+    Hint Constructors when lift1 lift2 : core.
     Lemma sem_exp_impl_from:
       forall n H b e es,
         CESem.sem_exp b H e es ->
@@ -632,7 +632,7 @@ Module Type NLINDEXEDTOCOIND
         CESem.sem_exp b H e es ->
         CoInd.sem_exp (tr_history H) (tr_stream b) e (tr_stream es).
     Proof. apply sem_exp_impl_from. Qed.
-    Hint Resolve sem_exp_impl_from sem_exp_impl.
+    Hint Resolve sem_exp_impl_from sem_exp_impl : core.
 
     (** An inversion principle for lists of [exp]. *)
     Lemma sem_exps_inv:
@@ -683,7 +683,7 @@ Module Type NLINDEXEDTOCOIND
         CESem.sem_exps b H es ess ->
         Forall2 (CoInd.sem_exp (tr_history H) (tr_stream b)) es (tr_streams ess).
     Proof. apply sem_exps_impl_from. Qed.
-    Hint Resolve sem_exps_impl_from sem_exps_impl.
+    Hint Resolve sem_exps_impl_from sem_exps_impl : core.
 
     (** An inversion principle for annotated [exp]. *)
     Lemma sem_aexp_inv:
@@ -731,7 +731,7 @@ Module Type NLINDEXEDTOCOIND
         CESem.sem_aexp b H ck e es ->
         CoInd.sem_aexp (tr_history H) (tr_stream b) ck e (tr_stream es).
     Proof. apply sem_aexp_impl_from. Qed.
-    Hint Resolve sem_aexp_impl_from sem_aexp_impl.
+    Hint Resolve sem_aexp_impl_from sem_aexp_impl : core.
 
     (** ** cexp level synchronous operators inversion principles *)
 
@@ -842,7 +842,7 @@ Module Type NLINDEXEDTOCOIND
 
     (** State the correspondence for [cexp].
         Goes by induction on [cexp] and uses the previous inversion lemmas. *)
-    Hint Constructors merge ite.
+    Hint Constructors merge ite : core.
     Lemma sem_cexp_impl_from:
       forall n H b e es,
         CESem.sem_cexp b H e es ->
@@ -872,7 +872,7 @@ Module Type NLINDEXEDTOCOIND
         CESem.sem_cexp b H e es ->
         CoInd.sem_cexp (tr_history H) (tr_stream b) e (tr_stream es).
     Proof. apply sem_cexp_impl_from. Qed.
-    Hint Resolve sem_cexp_impl_from sem_cexp_impl.
+    Hint Resolve sem_cexp_impl_from sem_cexp_impl : core.
 
     (** An inversion principle for annotated [cexp]. *)
     Lemma sem_caexp_inv:
@@ -919,7 +919,7 @@ Module Type NLINDEXEDTOCOIND
         CESem.sem_caexp b H ck e es ->
         CoInd.sem_caexp (tr_history H) (tr_stream b) ck e (tr_stream es).
     Proof. apply sem_caexp_impl_from. Qed.
-    Hint Resolve sem_caexp_impl_from sem_caexp_impl.
+    Hint Resolve sem_caexp_impl_from sem_caexp_impl : core.
 
     (** * RESET CORRESPONDENCE  *)
 
@@ -1108,11 +1108,11 @@ Module Type NLINDEXEDTOCOIND
       intro n; specialize (Sem n).
       eapply Forall_forall in Sem; eauto.
     Qed.
-    Hint Resolve sem_clocked_vars_impl.
+    Hint Resolve sem_clocked_vars_impl : core.
 
     (** The final theorem stating the correspondence for nodes applications.
         We have to use a custom mutually recursive induction scheme [sem_node_mult]. *)
-    Hint Constructors CoInd.sem_equation.
+    Hint Constructors CoInd.sem_equation : core.
     Theorem implies:
       forall f xss oss,
         Indexed.sem_node G f xss oss ->

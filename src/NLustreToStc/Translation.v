@@ -224,7 +224,7 @@ Module Type TRANSLATION
       destruct x as (x & tyck); constructor; try rewrite IHxs in *; auto.
   Qed.
 
-  Hint Resolve n_ingt0.
+  Hint Resolve n_ingt0 : core.
 
   (* =translate_node= *)
   Program Definition translate_node (n: node) : SynStc.system :=

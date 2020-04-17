@@ -1178,8 +1178,8 @@ Module Env.
   Existing Instance env_refines_preorder.
   Existing Instance Equivalence_Equiv.
 
-  Hint Immediate refines_empty.
-  Hint Extern 4 (refines _ (add ?x _ _) (add ?x _ _)) => apply refines_add.
+  Hint Immediate refines_empty : core.
+  Hint Extern 4 (refines _ (add ?x _ _) (add ?x _ _)) => apply refines_add : core.
 
   Lemma Equal_Equiv {A}:
     relation_equivalence Equal (Equiv (@eq A)).
@@ -1242,10 +1242,10 @@ Module Env.
     apply In_find. rewrite gso; auto.
   Qed.
 
-  Hint Immediate In_add1.
-  Hint Extern 4 (In ?x (add ?y ?v ?env)) => apply In_add2.
-  Hint Extern 4 (refines _ ?x ?x) => reflexivity.
-  Hint Immediate eq_Transitive.
+  Hint Immediate In_add1 : core.
+  Hint Extern 4 (In ?x (add ?y ?v ?env)) => apply In_add2 : core.
+  Hint Extern 4 (refines _ ?x ?x) => reflexivity : core.
+  Hint Immediate eq_Transitive : core.
 
   Section EnvDom.
 
@@ -1336,8 +1336,8 @@ Module Env.
     Global Opaque dom.
   End EnvDom.
 
-  Hint Extern 4 (dom ?env (?xs ++ nil)) => rewrite app_nil_r.
-  Hint Immediate dom_empty.
+  Hint Extern 4 (dom ?env (?xs ++ nil)) => rewrite app_nil_r : core.
+  Hint Immediate dom_empty : core.
 
   Add Parametric Morphism {A} (R: relation A) `{Equivalence _ R} : (@add A)
       with signature (eq ==> R ==> Equiv R ==> Equiv R)
@@ -1403,6 +1403,8 @@ Module Env.
   (** Notations *)
 
   Module Notations.
+    Declare Scope env_scope.
+
     Notation "e1 ≈ e2" :=  (Equal e1 e2)
                              (at level 70, no associativity) : env_scope.
 

@@ -88,7 +88,7 @@ Module Type CETYPING
 
   End WellTyped.
 
-  Hint Constructors wt_clock wt_exp wt_cexp.
+  Hint Constructors wt_clock wt_exp wt_cexp : core.
 
   Lemma wt_clock_add:
     forall x v env ck,

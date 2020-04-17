@@ -59,7 +59,7 @@ Module Type ISVARIABLE
     forall x ck y e,
       ~ Is_variable_in_eq x (EqDef y ck e) -> x <> y.
   Proof.
-    Hint Constructors Is_variable_in_eq.
+    Hint Constructors Is_variable_in_eq : core.
     intros ** Hxy. subst x. auto.
   Qed.
 
@@ -91,7 +91,7 @@ Module Type ISVARIABLE
   Lemma not_Is_defined_in_eq_not_Is_variable_in_eq:
     forall x eq, ~Is_defined_in_eq x eq -> ~Is_variable_in_eq x eq.
   Proof.
-    Hint Constructors Is_defined_in_eq.
+    Hint Constructors Is_defined_in_eq : core.
     intros x eq Hnidi.
     destruct eq; inversion 1; subst; intuition.
   Qed.
@@ -99,7 +99,7 @@ Module Type ISVARIABLE
   Lemma not_Is_defined_in_not_Is_variable_in:
     forall x eqs, ~Is_defined_in x eqs -> ~Is_variable_in x eqs.
   Proof.
-    Hint Constructors Is_defined_in_eq.
+    Hint Constructors Is_defined_in_eq : core.
     induction eqs as [|eq].
     - intro H; contradict H; inversion H.
     - intros Hndef Hvar.

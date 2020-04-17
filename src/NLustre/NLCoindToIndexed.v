@@ -162,7 +162,7 @@ Module Type NLCOINDTOINDEXED
       unfold tr_History, Env.map.
       rewrite Env.gmapi, Find', E; simpl; auto.
     Qed.
-    Hint Resolve sem_var_impl.
+    Hint Resolve sem_var_impl : core.
 
     Corollary sem_vars_impl:
       forall H xs xss,
@@ -175,7 +175,7 @@ Module Type NLCOINDTOINDEXED
       - apply sem_var_impl; auto.
       - apply IHForall2.
     Qed.
-    Hint Resolve sem_vars_impl.
+    Hint Resolve sem_vars_impl : core.
 
 
     (** ** Semantics of clocks *)
@@ -184,7 +184,7 @@ Module Type NLCOINDTOINDEXED
         with added complexity as [sem_clock] depends on [H] and [b].
         We go by induction on the clock [ck] then by induction on [n] and
         inversion of the coinductive hypothesis as before. *)
-    Hint Constructors CESem.sem_clock_instant.
+    Hint Constructors CESem.sem_clock_instant : core.
     Lemma sem_clock_index:
       forall n H b ck bs,
         CoInd.sem_clock H b ck bs ->
@@ -267,13 +267,13 @@ Module Type NLCOINDTOINDEXED
         match goal with H: tr_Stream _ _ = _ |- _ => rewrite H end;
         subst; eauto.
     Qed.
-    Hint Resolve sem_clock_impl.
+    Hint Resolve sem_clock_impl : core.
 
     (** ** Semantics of exps *)
 
     (** State the correspondence for [exp].
         Goes by induction on the coinductive semantics of [exp]. *)
-    Hint Constructors CESem.sem_exp_instant.
+    Hint Constructors CESem.sem_exp_instant : core.
     Lemma sem_exp_impl:
       forall H b e es,
         CoInd.sem_exp H b e es ->
@@ -310,7 +310,7 @@ Module Type NLCOINDTOINDEXED
           rewrite Hos; rewrite Hes1 in IHsem_exp1; rewrite Hes2 in IHsem_exp2;
             eauto.
     Qed.
-    Hint Resolve sem_exp_impl.
+    Hint Resolve sem_exp_impl : core.
 
     Corollary sem_exps_impl:
       forall H b es ess,
@@ -321,7 +321,7 @@ Module Type NLCOINDTOINDEXED
       - apply sem_exp_impl; auto.
       - apply IHForall2.
     Qed.
-    Hint Resolve sem_exps_impl.
+    Hint Resolve sem_exps_impl : core.
 
     (** Give an indexed specification for annotated [exp], using the previous
         lemma. *)
@@ -356,7 +356,7 @@ Module Type NLCOINDTOINDEXED
 
     (** We deduce from the previous lemma the correspondence for annotated
         [exp]. *)
-    (* Hint Constructors CESem.sem_aexp_instant. *)
+    (* Hint Constructors CESem.sem_aexp_instant : core. *)
     Corollary sem_aexp_impl:
       forall H b e es ck,
         CoInd.sem_aexp H b ck e es ->
@@ -367,7 +367,7 @@ Module Type NLCOINDTOINDEXED
         destruct Indexed as [(? & ? & Hes)|(? & ? & ? & Hes)];
         rewrite Hes; constructor; auto.
     Qed.
-    Hint Resolve sem_aexp_impl.
+    Hint Resolve sem_aexp_impl : core.
 
     (** [fby] is not a predicate but a function, so we directly state the
         correspondence.  *)
@@ -391,7 +391,7 @@ Module Type NLCOINDTOINDEXED
 
     (** State the correspondence for [cexp].
         Goes by induction on the coinductive semantics of [cexp]. *)
-    Hint Constructors CESem.sem_cexp_instant.
+    Hint Constructors CESem.sem_cexp_instant : core.
     Lemma sem_cexp_impl:
       forall H b e es,
         CoInd.sem_cexp H b e es ->
@@ -431,7 +431,7 @@ Module Type NLCOINDTOINDEXED
 
       - apply sem_exp_impl in He; unfold tr_Stream in *; auto.
     Qed.
-    Hint Resolve sem_cexp_impl.
+    Hint Resolve sem_cexp_impl : core.
 
     (** Give an indexed specification for annotated [cexp], using the previous
         lemma.  *)
@@ -476,7 +476,7 @@ Module Type NLCOINDTOINDEXED
         as [(? & ? & Hes)|(? & ? & ? & Hes)];
         rewrite Hes; constructor; auto.
     Qed.
-    Hint Resolve sem_caexp_impl.
+    Hint Resolve sem_caexp_impl : core.
 
     (** * RESET CORRESPONDENCE  *)
 
@@ -590,7 +590,7 @@ Module Type NLCOINDTOINDEXED
       - rewrite unfold_Stream at 1; simpl.
         rewrite tr_Stream_S, <-tr_Streams_tl; auto.
     Qed.
-    Hint Resolve tr_clocks_of.
+    Hint Resolve tr_clocks_of : core.
 
     (** Give an indexed specification for Streams synchronization. *)
     Lemma synchronized_index:
@@ -652,11 +652,11 @@ Module Type NLCOINDTOINDEXED
       eapply sem_clocked_var_impl; eauto.
       eapply Forall_forall in Sem; eauto; auto.
     Qed.
-    Hint Resolve sem_clocked_vars_impl.
+    Hint Resolve sem_clocked_vars_impl : core.
 
     (** The final theorem stating the correspondence for nodes applications.
         We have to use a custom mutually recursive induction scheme [sem_node_mult]. *)
-    Hint Constructors Indexed.sem_equation.
+    Hint Constructors Indexed.sem_equation : core.
     Theorem implies:
       forall f xss yss,
         CoInd.sem_node G f xss yss ->

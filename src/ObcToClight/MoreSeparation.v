@@ -139,7 +139,7 @@ Proof.
   simpl; intuition.
 Qed.
 
-Hint Resolve decidable_footprint_sepconj.
+Hint Resolve decidable_footprint_sepconj : core.
 
 Lemma decidable_ident_eq:
   forall (b b': AST.ident), Decidable.decidable (b = b').
@@ -161,7 +161,7 @@ Proof.
   apply Z.lt_decidable.
 Qed.
 
-Hint Resolve decidable_footprint_range.
+Hint Resolve decidable_footprint_range : core.
 
 Lemma decidable_footprint_contains:
   forall {f} chunk b ofs spec,
@@ -176,7 +176,7 @@ Proof.
   apply Z.lt_decidable.
 Qed.
 
-Hint Resolve decidable_footprint_contains.
+Hint Resolve decidable_footprint_contains : core.
 
 Lemma sep_unwand:
   forall P Q,
@@ -492,7 +492,7 @@ Qed.
 
 Hint Resolve footprint_perm_sepconj
              footprint_perm_range
-             footprint_perm_contains.
+             footprint_perm_contains : core.
 
 Lemma range_imp_with_wand:
   forall p P b lo hi,
@@ -653,7 +653,7 @@ Lemma sepemp_trivial:
 Proof.
   split.
 Qed.
-Hint Resolve sepemp_trivial.
+Hint Resolve sepemp_trivial : core.
 
 Lemma sepemp_right:
   forall P,
@@ -718,7 +718,7 @@ Proof.
   intros lo hi m. inversion 2.
 Qed.
 
-Hint Resolve decidable_footprint_sepemp footprint_perm_sepemp.
+Hint Resolve decidable_footprint_sepemp footprint_perm_sepemp : core.
 
 Lemma empty_range:
   forall {f} b lo hi,
@@ -750,7 +750,7 @@ Proof.
   intros p b lo hi m Hm. inversion Hm.
 Qed.
 
-Hint Resolve decidable_footprint_sepfalse footprint_perm_sepfalse.
+Hint Resolve decidable_footprint_sepfalse footprint_perm_sepfalse : core.
 
 Section MassertPredEqv.
   Context {A: Type}.
@@ -956,7 +956,7 @@ Section Sepall.
     - apply IH with (1:=Hfp).
   Qed.
 
-  Hint Resolve decidable_footprint_sepall footprint_perm_sepall.
+  Hint Resolve decidable_footprint_sepall footprint_perm_sepall : core.
 
   Lemma sepall_unwand:
   forall xs P Q,
@@ -1020,7 +1020,7 @@ Section Sepall.
 
 End Sepall.
 
-Hint Resolve decidable_footprint_sepall footprint_perm_sepall.
+Hint Resolve decidable_footprint_sepall footprint_perm_sepall : core.
 
 Instance sepall_massert_pred_eqv_permutation_eqv_Proper A:
   Proper (massert_pred_eqv ==> @Permutation.Permutation A ==> massert_eqv)

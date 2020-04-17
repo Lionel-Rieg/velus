@@ -2411,7 +2411,7 @@ Section ElabDeclaration.
     match goal with H:check_inst_names _ _ = OK ?x |- _ =>
                     rename H into Hcins; destruct x end.
 
-  Local Hint Resolve NoDupMembers_nil NoDup_nil.
+  Local Hint Resolve NoDupMembers_nil NoDup_nil : core.
 
   Program Definition elab_declaration (decl: LustreAst.declaration)
     : res {n | wt_node G n /\ wc_node G n /\ normal_args_node G n } :=

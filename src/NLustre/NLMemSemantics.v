@@ -278,7 +278,7 @@ enough: it does not support the internal fixpoint introduced by
       n.(n_name) <> f ->
       msem_node G f xs M ys.
   Proof.
-    Hint Constructors msem_node msem_equation.
+    Hint Constructors msem_node msem_equation : core.
     intros * Hord Hsem Hnf.
     revert Hnf.
     induction Hsem as [| |?????????????????????? Hsems|
@@ -440,7 +440,7 @@ enough: it does not support the internal fixpoint introduced by
     inversion 1; econstructor; eauto.
   Qed.
 
-  Hint Resolve mfby_add_val_n mfby_add_inst_n.
+  Hint Resolve mfby_add_val_n mfby_add_inst_n : core.
 
   Lemma msem_equation_madd_val:
     forall G bk H M x ms eqs,
@@ -448,7 +448,7 @@ enough: it does not support the internal fixpoint introduced by
       Forall (msem_equation G bk H M) eqs ->
       Forall (msem_equation G bk H (add_val_n x ms M)) eqs.
   Proof.
-    Hint Constructors msem_equation.
+    Hint Constructors msem_equation : core.
     intros * Hnd Hsem.
     induction eqs as [|eq eqs IH]; [now constructor|].
     apply not_Is_defined_in_cons in Hnd.
@@ -467,7 +467,7 @@ enough: it does not support the internal fixpoint introduced by
       Forall (msem_equation G bk H M) eqs ->
       Forall (msem_equation G bk H (add_inst_n x Mx M)) eqs.
   Proof.
-    Hint Constructors msem_equation.
+    Hint Constructors msem_equation : core.
     intros * Hnd Hsem.
     induction eqs as [|eq eqs IH]; [now constructor|].
     apply not_Is_defined_in_cons in Hnd.

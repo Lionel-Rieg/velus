@@ -276,7 +276,7 @@ Module Type FUSION
       (Fusible (fold_left (fun i x => Comp (f x) i) xs Skip)
        /\ Fusible iacc).
   Proof.
-    Hint Constructors Fusible.
+    Hint Constructors Fusible : core.
     induction xs as [|x xs IH]; [now intuition|].
     intros; split.
     - intro HH. simpl in HH. apply IH in HH.
@@ -301,7 +301,7 @@ Module Type FUSION
       (Can_write_in x s1 \/ Can_write_in x s2)
       <-> Can_write_in x (zip s1 s2).
   Proof.
-    Hint Constructors Can_write_in.
+    Hint Constructors Can_write_in : core.
     induction s1, s2; simpl;
       repeat progress
              match goal with
@@ -329,7 +329,7 @@ Module Type FUSION
       -> stmt_eval_eq (Comp (Ifte e s1 s2) (Ifte e t1 t2))
                       (Ifte e (Comp s1 t1) (Comp s2 t2)).
   Proof.
-    Hint Constructors stmt_eval.
+    Hint Constructors stmt_eval : core.
     intros e s1 s2 t1 t2 Hfw prog menv env menv' env'.
     split; intro Hstmt.
     - inversion_clear Hstmt as [| | |? ? ? ? ? env'' menv'' ? ? Hs Ht| | ].
@@ -376,7 +376,7 @@ Module Type FUSION
       -> Fusible s2
       -> Fusible (zip s1 s2).
   Proof.
-    Hint Constructors Fusible Can_write_in.
+    Hint Constructors Fusible Can_write_in : core.
     induction s1, s2;
       intros Hfree1 Hfree2;
       inversion_clear Hfree1;
@@ -441,7 +441,7 @@ Module Type FUSION
       Fusible s2 ->
       stmt_eval_eq (fuse' s1 s2) (Comp s1 s2).
   Proof.
-    Hint Constructors Fusible.
+    Hint Constructors Fusible : core.
     induction s2;
       intros s1 Hifte1 Hifte2; simpl;
         try now (rewrite zip_Comp'; intuition).

@@ -392,7 +392,7 @@ enough: it does not support the internal fixpoint introduced by
       -> Forall (fun nd' : node => n_name nd <> n_name nd') G
       -> sem_node (nd::G) f xs ys.
   Proof.
-    Hint Constructors sem_equation.
+    Hint Constructors sem_equation : core.
     intros nd G f xs ys Hord Hsem Hnin.
     assert (Hnin':=Hnin).
     revert Hnin'.

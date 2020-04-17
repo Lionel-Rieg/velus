@@ -220,14 +220,14 @@ Module Export Ids <: IDS.
   Proof.
     left; auto.
   Qed.
-  Hint Resolve self_reserved.
+  Hint Resolve self_reserved : core.
 
   Lemma out_reserved:
     In out reserved.
   Proof.
     right; constructor; auto.
   Qed.
-  Hint Resolve out_reserved.
+  Hint Resolve out_reserved : core.
 
   Lemma reserved_nodup: NoDup reserved.
   Proof.
@@ -249,7 +249,7 @@ Module Export Ids <: IDS.
     rewrite Eq in Notin.
     contradict Notin; apply in_eq.
   Qed.
-  Hint Resolve self_not_out.
+  Hint Resolve self_not_out : core.
 
   Lemma methods_nodup: NoDup methods.
   Proof.
@@ -271,7 +271,7 @@ Module Export Ids <: IDS.
     intro Hrs. rewrite Hrs in *.
     intuition.
   Qed.
-  Hint Resolve reset_not_step.
+  Hint Resolve reset_not_step : core.
 
   Lemma fun_not_out: fun_id <> out.
   Proof.
@@ -279,7 +279,7 @@ Module Export Ids <: IDS.
     apply pos_of_str_injective in E.
     discriminate.
   Qed.
-  Hint Resolve fun_not_out.
+  Hint Resolve fun_not_out : core.
 
   Definition NotReserved {typ: Type} (xty: ident * typ) : Prop :=
     ~In (fst xty) reserved.
@@ -530,7 +530,7 @@ Module Export Ids <: IDS.
     apply self_valid; unfold self; rewrite pos_to_str_equiv.
     rewrite <- E, In_str_app; right; apply In_str_eq.
   Qed.
-  Hint Resolve self_not_prefixed.
+  Hint Resolve self_not_prefixed : core.
 
   Lemma out_not_prefixed: ~ prefixed out.
   Proof.
@@ -541,7 +541,7 @@ Module Export Ids <: IDS.
     apply out_valid; unfold out; rewrite pos_to_str_equiv.
     rewrite <- E, In_str_app; right; apply In_str_eq.
   Qed.
-  Hint Resolve out_not_prefixed.
+  Hint Resolve out_not_prefixed : core.
 
   Remark sync_id_valid: valid sync_id.
   Proof.

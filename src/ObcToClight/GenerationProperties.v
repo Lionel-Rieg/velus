@@ -165,7 +165,7 @@ Proof.
   rewrite map_app.
   now rewrite translate_param_fst, translate_obj_fst.
 Qed.
-Hint Resolve NoDupMembers_make_members.
+Hint Resolve NoDupMembers_make_members : core.
 
 Lemma glob_bind_vardef_fst:
   forall xs env volatile,
@@ -540,7 +540,7 @@ Lemma type_pres_var:
 Proof.
   intros; unfold translate_var; cases.
 Qed.
-Hint Resolve type_pres_var.
+Hint Resolve type_pres_var : core.
 
 Lemma type_pres:
   forall c m e, Clight.typeof (translate_exp c m e) = cltype (typeof e).
@@ -549,7 +549,7 @@ Proof.
   - destruct cst; simpl; reflexivity.
   - destruct u; auto.
 Qed.
-Hint Resolve type_pres.
+Hint Resolve type_pres : core.
 
 Remark types_pres':
   forall f es,
@@ -601,7 +601,7 @@ Proof.
   apply in_map_iff in Hin as ((?&?) & E &?); inv E.
   eapply In_InMembers; eauto.
 Qed.
-Hint Resolve NoDupMembers_translate_param.
+Hint Resolve NoDupMembers_translate_param : core.
 
 Lemma reserved_not_in_translate_param_meth_vars:
   forall f x,
@@ -614,7 +614,7 @@ Proof.
   eapply (m_notreserved x); auto.
   eapply In_InMembers; eauto.
 Qed.
-Hint Resolve reserved_not_in_translate_param_meth_vars.
+Hint Resolve reserved_not_in_translate_param_meth_vars : core.
 
 Corollary self_not_in_translate_param_in:
   forall f,
@@ -624,7 +624,7 @@ Proof.
   eapply NotInMembers_app; eauto; rewrite <-map_app.
   eapply reserved_not_in_translate_param_meth_vars; auto.
 Qed.
-Hint Resolve self_not_in_translate_param_in.
+Hint Resolve self_not_in_translate_param_in : core.
 
 Corollary out_not_in_translate_param_in:
   forall f,
@@ -634,7 +634,7 @@ Proof.
   eapply NotInMembers_app; eauto; rewrite <-map_app.
   eapply reserved_not_in_translate_param_meth_vars; auto.
 Qed.
-Hint Resolve out_not_in_translate_param_in.
+Hint Resolve out_not_in_translate_param_in : core.
 
 Corollary self_not_in_translate_param_vars:
   forall f,
@@ -646,7 +646,7 @@ Proof.
   do 2  setoid_rewrite map_app.
   rewrite 2 InMembers_app; auto.
 Qed.
-Hint Resolve self_not_in_translate_param_vars.
+Hint Resolve self_not_in_translate_param_vars : core.
 
 Corollary out_not_in_translate_param_vars:
   forall f,
@@ -658,7 +658,7 @@ Proof.
   do 2  setoid_rewrite map_app.
   rewrite 2 InMembers_app; auto.
 Qed.
-Hint Resolve out_not_in_translate_param_vars.
+Hint Resolve out_not_in_translate_param_vars : core.
 
 Lemma self_not_in_temps:
   forall prog f,
@@ -667,7 +667,7 @@ Proof.
   intros; apply NotInMembers_app; split; auto.
   intro Hin; apply make_out_temps_prefixed in Hin; auto.
 Qed.
-Hint Resolve self_not_in_temps.
+Hint Resolve self_not_in_temps : core.
 
 Lemma out_not_in_temps:
   forall prog f,
@@ -676,7 +676,7 @@ Proof.
   intros; apply NotInMembers_app; split; auto.
   intro Hin; apply make_out_temps_prefixed in Hin; auto.
 Qed.
-Hint Resolve out_not_in_temps.
+Hint Resolve out_not_in_temps : core.
 
 Lemma c_objs_field_offset:
   forall ge o c cls,
@@ -1696,5 +1696,5 @@ Section TranslateOk.
 
 End TranslateOk.
 
-Hint Resolve Consistent prog_defs_norepet make_members_co.
-Hint Resolve norepet_vars_main norepet_params_main disjoint_params_temps_main.
+Hint Resolve Consistent prog_defs_norepet make_members_co : core.
+Hint Resolve norepet_vars_main norepet_params_main disjoint_params_temps_main : core.
