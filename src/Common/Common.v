@@ -441,7 +441,7 @@ Proof.
   split; intro HH.
   - apply Forall_forall.
     intros x Hin. apply HH.
-    apply PSF.elements_iff; auto.
+    apply PSF.elements_iff; auto using In_InA.
   - intros x Hin.
     rewrite Forall_forall in HH; apply HH.
     apply PSF.elements_iff, SetoidList.InA_alt in Hin.
@@ -572,7 +572,7 @@ Proof.
   apply NoDup_Permutation.
   - apply NoDup_NoDupA, PS.elements_spec2w.
   - constructor; [|now apply NoDup_NoDupA, PS.elements_spec2w].
-    setoid_rewrite PSF.elements_iff in Hnin; auto.
+    setoid_rewrite PSF.elements_iff in Hnin; auto using In_InA.
   - clear. intro z.
     setoid_rewrite In_PS_elements.
     setoid_rewrite PS.add_spec.
@@ -746,7 +746,7 @@ Lemma ps_adds_of_list:
     PS.Equal (ps_adds xs PS.empty) (PSP.of_list xs).
 Proof.
   intros xs x. rewrite ps_adds_spec, PSP.of_list_1; split.
-  -intros [Hin|Hin]; auto. now apply not_In_empty in Hin.
+  -intros [Hin|Hin]; auto using In_InA. now apply not_In_empty in Hin.
   - intro Hin. apply SetoidList.InA_alt in Hin as (y & Hy & Hin); subst; auto.
 Qed.
 

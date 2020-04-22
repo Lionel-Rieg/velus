@@ -189,7 +189,7 @@ Section Extra.
 
   Lemma filter_app:
     forall (p:A->bool) xs ys,
-      filter p xs ++ filter p ys = filter p (xs ++ ys).
+      filter p (xs ++ ys) = filter p xs ++ filter p ys.
   Proof.
     induction xs as [|x xs]; intro ys; auto.
     simpl; destruct (p x); simpl; rewrite IHxs; auto.
