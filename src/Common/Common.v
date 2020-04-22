@@ -434,6 +434,15 @@ Proof.
   split; intro HH; repeat rewrite PS.inter_spec in *; intuition.
 Qed.
 
+Lemma In_implies_InA:
+  forall x l (INV : In x l),
+    InA (A:=positive) eq x l.
+Proof.
+  induction l; intros; inv INV; auto.
+Qed.
+
+Hint Resolve In_implies_InA.
+
 Lemma PS_For_all_Forall:
   forall P s,
     PS.For_all P s <-> Forall P (PS.elements s).
