@@ -1,0 +1,25 @@
+opam-version: "2.0"
+maintainer: "Lionel Rieg"
+synopsis: "Personal fork of the Velus projet"
+homepage: "https://github.com/Lionel-Rieg/velus"
+bug-reports: "https://github.com/Lionel-Rieg/velus/issues"
+
+build: [
+  [ "rm" "-rf" "CompCert/" ]
+  [ "git" "clone" "-b" "v3.7-velus" "https://github.com/Lionel-Rieg/CompCert.git" ]
+  [ "./configure" "x86_64-linux" ]
+  [ make "-j%{jobs}%" "velus" ]
+  [ make "runtests" ]
+]
+
+depends: [
+  "ocaml" {>= "4.05.0"}
+  "coq" {(>= "8.10") | (= "dev")}
+  "menhir" {= "20190626"}
+]
+
+tags: [
+]
+authors: [
+  "Lionel Rieg"
+]
