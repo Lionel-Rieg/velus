@@ -18,7 +18,7 @@ jobs:
         coq_version:
           - "8.10"
           - "8.11"
-          - "dev"
+          # - "dev"
         ocaml_version:
           - "4.05"
           - "4.07-flambda"
