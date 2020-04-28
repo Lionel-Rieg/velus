@@ -33,15 +33,17 @@ while : ; do
     -bindir|--bindir)
         bindir="-bindir $2"; shift;;
     -libdir|--libdir)
-        libdir=-"libdir $2"; shift;;
+        libdir="-libdir $2"; shift;;
     -toolprefix|--toolprefix)
-        toolprefix=-"toolprefix $2"; shift;;
+        toolprefix="-toolprefix $2"; shift;;
     -no-runtime-lib)
         runtime_lib="-no-runtime-lib";;
     -no-standard-headers)
         standard_headers="-no-standard-headers";;
     -clightgen)
         clightgen="-clightgen";;
+    -ignore-coq-version)
+        ignore_coq="-ignore-coq-version";;
     *)
         target="$1";;
   esac
@@ -50,7 +52,7 @@ done
 
 # Configure CompCert and extract relevant values into Makefile.config
 (cd "$compcertdir" &&
- ./configure $prefix $bindir $libdir $toolprefix $runtime_lib \
+ ./configure $prefix $bindir $libdir $toolprefix $runtime_lib $ignore_coq \
  $standard_headers $clightgen $target)
 if [ -f "$compcertdir"/Makefile.config ]; then
     export "$(grep ARCH < "$compcertdir"/Makefile.config)"

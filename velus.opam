@@ -7,7 +7,7 @@ bug-reports: "https://github.com/Lionel-Rieg/velus/issues"
 build: [
   [ "rm" "-rf" "CompCert/" ]
   [ "git" "clone" "-b" "v3.7-velus" "https://github.com/Lionel-Rieg/CompCert.git" ]
-  [ "./configure" "x86_64-linux" ]
+  [ "./configure" "-ignore-coq-version" "x86_64-linux" ]
   [ make "-j%{jobs}%" "velus" ]
   [ make "runtests" ]
 ]
