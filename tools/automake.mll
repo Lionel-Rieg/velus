@@ -109,7 +109,7 @@ rule scan = parse
       ["check-admitted"], ["$(VFILES)"], ["@grep -w 'admit\\|Admitted\\|ADMITTED' $^ ||\
                                            echo \"Nothing admitted.\""];
       ["%.vo"; "%.glob"], ["%.v"], ["@echo \"COQC $*.v\"";
-                                    "$(COQC) -dump-glob $(DOCDIR)/$(*F).glob $(COQFLAGS) $*"]
+                                    "$(COQC) -dump-glob $(DOCDIR)/$(*F).glob $(COQFLAGS) $*.v"]
     ]
     in
     print_section oc "RULES";
