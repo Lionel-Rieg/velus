@@ -410,7 +410,7 @@ Module Type OBCADDDEFAULTS
     remember (rev (PS.elements W)) as ws.
     assert (forall x, PS.In x W <-> In x ws) as HinW.
     { intro x; subst ws. rewrite <-in_rev, PSF.elements_iff.
-      split; intro HH; auto. apply SetoidList.InA_alt in HH.
+      split; intro HH; auto using SetoidList.In_InA. apply SetoidList.InA_alt in HH.
       destruct HH as (? & ? & ?); subst; eauto. }
     setoid_rewrite PS_For_all_Forall.
     setoid_rewrite (Permutation.Permutation_rev (PS.elements W)) at 1 4.
@@ -443,7 +443,7 @@ Module Type OBCADDDEFAULTS
     remember (rev (PS.elements W)) as ws.
     assert (forall x, PS.In x W <-> In x ws) as HinW.
     { intro x; subst ws. rewrite <-in_rev, PSF.elements_iff.
-      split; intro HH; auto. apply SetoidList.InA_alt in HH.
+      split; intro HH; auto using SetoidList.In_InA. apply SetoidList.InA_alt in HH.
       destruct HH as (? & ? & ?); subst; eauto. }
     setoid_rewrite HinW. setoid_rewrite <-Heqws.
     clear Heqws HinW W.
@@ -642,7 +642,7 @@ Module Type OBCADDDEFAULTS
     remember (rev (PS.elements W)) as ws.
     assert (forall x, PS.In x W <-> In x ws) as HinW.
     { intro y; subst ws. rewrite <-in_rev, PSF.elements_iff.
-      split; intro HH; auto. apply SetoidList.InA_alt in HH.
+      split; intro HH; auto using SetoidList.In_InA. apply SetoidList.InA_alt in HH.
       destruct HH as (? & ? & ?); subst; eauto. }
     setoid_rewrite <-Heqws; rewrite HinW; clear Heqws HinW W.
     induction ws as [|w ws IH]; auto.

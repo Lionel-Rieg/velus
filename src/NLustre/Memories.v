@@ -235,7 +235,7 @@ Module Type MEMORIES
     }
 
     rewrite <-Hfout; clear Hfout.
-    rewrite <-filter_app, filter_mem_fst, <-n_defd.
+    rewrite <- filter_app, filter_mem_fst, <-n_defd.
     remember (memories n.(n_eqs)) as mems.
     set (P:=fun eqs eq=> In eq eqs ->
                       forall x, In x (var_defined eq) ->
@@ -320,7 +320,11 @@ Module Type MEMORIES
     }
 
     rewrite <-Hfout; clear Hfout.
+<<<<<<< HEAD
     rewrite <-filter_app, notb_filter_mem_fst, <-n_defd.
+=======
+    rewrite <- filter_app, notb_filter_mem_fst, <-n_defd.
+>>>>>>> eaeb9d2569ce1277fdca9b703846f241e921ac01
     remember (memories n.(n_eqs)) as mems.
     set (P := fun eqs eq =>  In eq eqs ->
                           forall x, In x (var_defined eq) ->
