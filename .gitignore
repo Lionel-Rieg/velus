@@ -2,8 +2,8 @@
 *.vo
 *.vo.aux
 *.aux
-*.vos
 *.vok
+*.vos
 *.glob
 *.o
 *.a

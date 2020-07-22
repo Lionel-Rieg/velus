@@ -187,14 +187,6 @@ Section Extra.
     reflexivity.
   Qed.
 
-  Lemma filter_app:
-    forall (p:A->bool) xs ys,
-      filter p (xs ++ ys) = filter p xs ++ filter p ys.
-  Proof.
-    induction xs as [|x xs]; intro ys; auto.
-    simpl; destruct (p x); simpl; rewrite IHxs; auto.
-  Qed.
-
   Remark split_map:
     forall {B C} (xs: list C) (l: list A) (l': list B) f f',
       split (map (fun x => (f x, f' x)) xs) = (l, l') ->
