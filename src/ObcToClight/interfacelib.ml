@@ -166,6 +166,7 @@ module PrintClightOpsFun (OpNames : sig
         | Oand            -> ( 8, LtoR)
         | Oxor            -> ( 7, LtoR)
         | Oor             -> ( 6, LtoR)
+        | Oexpect         -> (14, LtoR)
   end
 
 module Basics = struct

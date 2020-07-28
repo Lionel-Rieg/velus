@@ -242,6 +242,7 @@ Separate Extraction
          Conventions1.dummy_int_reg Conventions1.dummy_float_reg
          Conventions1.int_callee_save_regs Conventions1.int_caller_save_regs
          Conventions1.float_callee_save_regs Conventions1.float_caller_save_regs
-	 Clight.type_of_function Compopts.optim_postpass.
+	 Clight.type_of_function Compopts.optim_postpass
+	 Archi.has_notrap_loads.
 
 Extraction Library Ordered.
