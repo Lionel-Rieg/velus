@@ -1,0 +1,48 @@
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        coq_version:
+          - "8.9"
+          - "8.10"
+          - "8.11"
+          # - "dev"
+        ocaml_version:
+          - "4.05"
+          - "4.07-flambda"
+      # don't cancel all in-progress jobs if one matrix job fails:
+      fail-fast: false
+
+    container:
+      # The image is set up with user coq, not compatible with GitHub action settings
+      # so we force the user back to root
+      image: docker://coqorg/coq:${{ matrix.coq_version }}
+      options: "--user root:root"
+
+    steps:
+      - name: Install Menhir & test opam config
+        run: |
+          # Since the user is root and not coq, we need to fix opam root
+          export OPAMROOT=/home/coq/.opam
+          opam switch list
+          opam switch $(ocaml_version)
+          opam list
+          opam install menhir.20190626 -y
+          eval $(opam env)
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: snickerbockers/submodules-init@v4
+      - name: Build Velus
+        run: |
+          export OPAMROOT=/home/coq/.opam
+          eval $(opam env)
+          ./configure -ignore-coq-version x86_64-linux
+          make -j 2 velus
+      - name: Tests
+        run: |
+          export OPAMROOT=/home/coq/.opam
+          eval $(opam env)
+          make runtests

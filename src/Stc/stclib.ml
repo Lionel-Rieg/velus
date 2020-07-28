@@ -164,7 +164,7 @@ module SchedulerFun
 
     module Int = struct
       type t = int
-      let compare = (Stdlib.compare : t -> t -> int)
+      let compare = (compare : t -> t -> int)
     end
 
     module TcSet = Set.Make (Int)

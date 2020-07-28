@@ -750,6 +750,9 @@ Module Export Op <: OPERATORS.
            /\ good_bool v t).
       { destruct 1 as (Hnun' & Hnptr' & Hgb). eauto using typecl_wt_val_wt_val. }
       destruct op; simpl in Hsem; try discriminate Heq1.
+      + (* expect *)
+        unfold Cop.sem_expect, Cop.sem_binarith in Hsem.
+        DestructCases; repeat split; try discriminate; try ContradictNotVptr; auto.
       + (* add *)
         unfold Cop.sem_add, Cop.sem_binarith in Hsem.
         rewrite classify_add_cltypes in Hsem.
@@ -855,9 +858,9 @@ Module Export Op <: OPERATORS.
   Proof.
     intros * Hnptr1 Hnptr2.
     destruct op; simpl;
-      unfold Cop.sem_add, Cop.sem_sub, Cop.sem_mul, Cop.sem_div, Cop.sem_mod,
-             Cop.sem_and, Cop.sem_or, Cop.sem_xor, Cop.sem_shl, Cop.sem_shr,
-             Cop.sem_cmp, Cop.sem_binarith;
+      unfold Cop.sem_expect, Cop.sem_add, Cop.sem_sub, Cop.sem_mul, Cop.sem_div,
+             Cop.sem_mod, Cop.sem_and, Cop.sem_or, Cop.sem_xor, Cop.sem_shl,
+             Cop.sem_shr, Cop.sem_cmp, Cop.sem_binarith;
       try rewrite classify_add_cltypes;
       try rewrite classify_sub_cltypes;
       try rewrite classify_cmp_cltypes;
@@ -973,7 +976,7 @@ Module Export Op <: OPERATORS.
 
   Definition type_binop' (op: binop) (ty1 ty2: type) : option type :=
     match op with
-    | Cop.Oadd | Cop.Osub | Cop.Omul | Cop.Odiv =>
+    | Cop.Oexpect | Cop.Oadd | Cop.Osub | Cop.Omul | Cop.Odiv =>
         match ty1, ty2 with
         | Tfloat Ctypes.F64              , _                               => Some (Tfloat Ctypes.F64)
         | _                              , Tfloat Ctypes.F64               => Some (Tfloat Ctypes.F64)

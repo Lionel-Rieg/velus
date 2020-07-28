@@ -1170,7 +1170,8 @@ Definition obind2 {A B C: Type} (f: option (A * B)) (g: A -> B -> option C) : op
   | None => None
   end.
 
-Declare Scope option_monad_scope.
+(* Removed for compatibility with Coq 8.9
+Declare Scope option_monad_scope. *)
 Notation "'do' X <- A ; B" := (obind A (fun X => B))
                                 (at level 200, X ident, A at level 100, B at level 200)
                               : option_monad_scope.

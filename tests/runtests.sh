@@ -31,7 +31,7 @@ do
     else
 	      OK_FAILURE=$(( OK_FAILURE + 1 ))
         ERR=$(</tmp/err)
-        CHECK="${red}KO\n  $ERR${normal}"
+        CHECK="${red}KO$ERR${normal}"
     fi
     printf " %b\n" "${CHECK}"
 done
@@ -52,7 +52,7 @@ do
     else
 	      KO_SUCCESS=$(( KO_SUCCESS + 1 ))
         ERR=$(</tmp/err)
-        CHECK="${blue}KO  $ERR${normal}"
+        CHECK="${blue}KO$ERR${normal}"
     fi
     printf " %b\n" "${CHECK}"
 done

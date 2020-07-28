@@ -25,7 +25,8 @@ Module Type COINDSTREAMS
        (Import Op : OPERATORS)
        (Import OpAux : OPERATORS_AUX Op).
 
-  Declare Scope stream_scope.
+  (* Removed for compatibility with Coq 8.9
+  Declare Scope stream_scope. *)
   Infix "⋅" := Cons (at level 60, right associativity) : stream_scope.
   Infix "≡" := EqSt (at level 70, no associativity) : stream_scope.
   Notation "s # n " := (Str_nth n s) (at level 9) : stream_scope.

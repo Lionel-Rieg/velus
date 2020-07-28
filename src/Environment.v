@@ -1403,7 +1403,8 @@ Module Env.
   (** Notations *)
 
   Module Notations.
-    Declare Scope env_scope.
+    (* Removed for compatibility with Coq 8.9
+    Declare Scope env_scope. *)
 
     Notation "e1 ≈ e2" :=  (Equal e1 e2)
                              (at level 70, no associativity) : env_scope.
