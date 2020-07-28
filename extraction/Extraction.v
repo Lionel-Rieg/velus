@@ -21,12 +21,34 @@ Cd "extraction/extracted".
 
 Extraction Blacklist Int String List.
 
+
 (* Selection *)
+
 Extract Constant Selection.compile_switch => "Switchaux.compile_switch".
 Extract Constant Selection.if_conversion_heuristic => "Selectionaux.if_conversion_heuristic".
 
 (* RTLgen *)
 Extract Constant RTLgen.more_likely => "RTLgenaux.more_likely".
+Extraction Inline RTLgen.ret RTLgen.error RTLgen.bind RTLgen.bind2.
+
+(* Inlining *)
+Extract Inlined Constant Inlining.should_inline => "Inliningaux.should_inline".
+Extract Inlined Constant Inlining.inlining_info => "Inliningaux.inlining_info".
+Extract Inlined Constant Inlining.inlining_analysis => "Inliningaux.inlining_analysis".
+Extraction Inline Inlining.ret Inlining.bind.
+
+(* Loop invariant code motion *)
+Extract Inlined Constant LICM.gen_injections => "LICMaux.gen_injections".
+
+(* Allocation *)
+Extract Constant Allocation.regalloc => "Regalloc.regalloc".
+
+(* Linearize *)
+Extract Constant Linearize.enumerate_aux => "Linearizeaux.enumerate_aux".
+
+(* SimplExpr *)
+Extract Constant SimplExpr.first_unused_ident => "Camlcoq.first_unused_ident".
+Extraction Inline SimplExpr.ret SimplExpr.error SimplExpr.bind SimplExpr.bind2.
 
 (* Compopts *)
 Extract Constant Compopts.optim_for_size =>
@@ -37,38 +59,59 @@ Extract Constant Compopts.propagate_float_constants =>
   "fun _ -> !Clflags.option_ffloatconstprop >= 1".
 Extract Constant Compopts.generate_float_constants =>
   "fun _ -> !Clflags.option_ffloatconstprop >= 2".
-Extract Constant Compopts.optim_duplicate =>
-  "fun _ -> (if !Clflags.option_fduplicate = -1 then false else true)".
 Extract Constant Compopts.optim_tailcalls =>
   "fun _ -> !Clflags.option_ftailcalls".
+Extract Constant Compopts.optim_duplicate =>
+  "fun _ -> (if !Clflags.option_fduplicate = -1 then false else true)".
 Extract Constant Compopts.optim_constprop =>
   "fun _ -> !Clflags.option_fconstprop".
 Extract Constant Compopts.optim_CSE =>
   "fun _ -> !Clflags.option_fcse".
 Extract Constant Compopts.optim_CSE2 =>
   "fun _ -> !Clflags.option_fcse2".
+Extract Constant Compopts.optim_CSE3 =>
+  "fun _ -> !Clflags.option_fcse3".
+Extract Constant Compopts.optim_CSE3_alias_analysis =>
+  "fun _ -> !Clflags.option_fcse3_alias_analysis".
+Extract Constant Compopts.optim_CSE3_across_calls =>
+  "fun _ -> !Clflags.option_fcse3_across_calls".
+Extract Constant Compopts.optim_CSE3_across_merges =>
+  "fun _ -> !Clflags.option_fcse3_across_merges".
+Extract Constant Compopts.optim_CSE3_glb =>
+  "fun _ -> !Clflags.option_fcse3_glb".
+Extract Constant Compopts.optim_move_loop_invariants =>
+  "fun _ -> !Clflags.option_fmove_loop_invariants".
+
 Extract Constant Compopts.optim_redundancy =>
   "fun _ -> !Clflags.option_fredundancy".
 Extract Constant Compopts.optim_postpass =>
   "fun _ -> !Clflags.option_fpostpass".
+Extract Constant Compopts.thumb =>
+  "fun _ -> !Clflags.option_mthumb".
+Extract Constant Compopts.debug =>
+  "fun _ -> !Clflags.option_g".
 Extract Constant Compopts.optim_globaladdrtmp =>
   "fun _ -> !Clflags.option_fglobaladdrtmp".
 Extract Constant Compopts.optim_globaladdroffset =>
   "fun _ -> !Clflags.option_fglobaladdroffset".
 Extract Constant Compopts.optim_xsaddr =>
   "fun _ -> !Clflags.option_fxsaddr".
-Extract Constant Compopts.optim_coalesce_mem =>
-  "fun _ -> !Clflags.option_fcoalesce_mem".
 Extract Constant Compopts.optim_addx =>
   "fun _ -> !Clflags.option_faddx".
-Extract Constant Compopts.thumb =>
-  "fun _ -> !Clflags.option_mthumb".
-Extract Constant Compopts.debug =>
-  "fun _ -> !Clflags.option_g".
-Extract Constant Compopts.all_loads_nontrap =>
-  "fun _ -> !Clflags.option_all_loads_nontrap".
+Extract Constant Compopts.optim_madd =>
+  "fun _ -> !Clflags.option_fmadd".
+Extract Constant Compopts.optim_coalesce_mem =>
+  "fun _ -> !Clflags.option_fcoalesce_mem".
 Extract Constant Compopts.optim_forward_moves =>
   "fun _ -> !Clflags.option_fforward_moves".
+Extract Constant Compopts.va_strict =>
+  "fun _ -> false".
+Extract Constant Compopts.all_loads_nontrap =>
+  "fun _ -> !Clflags.option_all_loads_nontrap".
+Extract Constant Compopts.profile_arcs =>
+"fun _ -> !Clflags.option_profile_arcs".
+Extract Constant Compopts.branch_probabilities =>
+  "fun _ -> !Clflags.option_fbranch_probabilities".
 
 (* Compiler *)
 Extract Constant Compiler.print_Clight => "PrintClight.print_if".
@@ -77,21 +120,18 @@ Extract Constant Compiler.print_RTL => "PrintRTL.print_if".
 Extract Constant Compiler.print_LTL => "PrintLTL.print_if".
 Extract Constant Compiler.print_Mach => "PrintMach.print_if".
 Extract Constant Compiler.print => "fun (f: 'a -> unit) (x: 'a) -> f x; x".
+Extract Constant Compiler.time  => "Timing.time_coq".
+Extract Constant Compopts.time  => "Timing.time_coq".
+(*Extraction Inline Compiler.apply_total Compiler.apply_partial.*)
 
-(* Inlining *)
-Extract Inlined Constant Inlining.should_inline => "Inliningaux.should_inline".
-Extract Inlined Constant Inlining.inlining_info => "Inliningaux.inlining_info".
-Extract Inlined Constant Inlining.inlining_analysis => "Inliningaux.inlining_analysis".
-Extraction Inline Inlining.ret Inlining.bind.
-
-(* Allocation *)
-Extract Constant Allocation.regalloc => "Regalloc.regalloc".
-
-(* Linearize *)
-Extract Constant Linearize.enumerate_aux => "Linearizeaux.enumerate_aux".
-
-Extract Constant Ident.pos_of_str => "(fun str -> Camlcoq.(str |> camlstring_of_coqstring |> intern_string))".
-Extract Constant Ident.pos_to_str => "(fun pos -> Camlcoq.(pos |> extern_atom |> coqstring_of_camlstring))".
+(* Profiling *)
+Extract Constant AST.profiling_id => "Digest.t".
+Extract Constant AST.profiling_id_eq => "Digest.equal".
+Extract Constant Profiling.function_id => "Profilingaux.function_id".
+Extract Constant Profiling.branch_id => "Profilingaux.branch_id".
+Extract Constant ProfilingExploit.function_id => "Profilingaux.function_id".
+Extract Constant ProfilingExploit.branch_id => "Profilingaux.branch_id".
+Extract Constant ProfilingExploit.condition_oracle => "Profilingaux.condition_oracle".
 
 (* Lexing/Parsing/Elaboration *)
 Extract Constant LustreAst.astloc =>
