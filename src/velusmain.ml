@@ -186,6 +186,7 @@ let _ =
                     then Machine.rv64
                     else Machine.rv32
     | "kvx"      -> Machine.kvx
+    | "aarch64" -> Machine.aarch64
     | _          -> assert false
   end;
   Env.set_builtins C2C.builtins;
