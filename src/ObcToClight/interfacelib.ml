@@ -112,6 +112,7 @@ module LustreOpNames =
       | Cop.Ogt  -> ">"
       | Cop.Ole  -> "<="
       | Cop.Oge  -> ">="
+      | Cop.Oexpect -> "expect"
   end
 
 module PrintClightOpsFun (OpNames : sig
