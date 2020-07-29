@@ -46,6 +46,9 @@ Extract Constant Allocation.regalloc => "Regalloc.regalloc".
 (* Linearize *)
 Extract Constant Linearize.enumerate_aux => "Linearizeaux.enumerate_aux".
 
+Extract Constant Ident.pos_of_str => "(fun str -> Camlcoq.(str |> camlstring_of_coqstring |> intern_string))".
+Extract Constant Ident.pos_to_str => "(fun pos -> Camlcoq.(pos |> extern_atom |> coqstring_of_camlstring))".
+
 (* SimplExpr *)
 Extract Constant SimplExpr.first_unused_ident => "Camlcoq.first_unused_ident".
 Extraction Inline SimplExpr.ret SimplExpr.error SimplExpr.bind SimplExpr.bind2.
