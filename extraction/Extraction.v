@@ -12,7 +12,7 @@ From Velus Require Import Lustre.Parser.LustreParser.
 From compcert Require
      cfrontend.Initializers cfrontend.Ctyping
      backend.Selection backend.RTLgen
-     driver.Compiler cparser.Cabs Asmaux.
+     driver.Compiler cparser.Cabs Asmaux backend.CSE3 lib.HashedSet.
 
 (* Processor-specific extraction directives *)
 Load extractionMachdep.
@@ -205,6 +205,12 @@ Extract Constant Cabs.loc =>
 Extract Constant Cabs.string => "String.t".
 Extract Constant Cabs.char_code => "int64".
 
+Extract Inlined Constant CSE3.preanalysis => "CSE3analysisaux.preanalysis".
+
+Extract Inductive HashedSet.PSet_internals.pset => "HashedSetaux.pset" [ "HashedSetaux.empty" "HashedSetaux.node" ] "HashedSetaux.pset_match".
+
+Extract Inlined Constant HashedSet.PSet_internals.pset_eq => "(==)" (* "HashedSetaux.eq" *).
+
 (* Extract Constant LustreElab.do_add_when_to_constants => *)
 (*     "Veluslib.do_add_when_to_constants". *)
 
@@ -246,6 +252,7 @@ Separate Extraction
          Conventions1.int_callee_save_regs Conventions1.int_caller_save_regs
          Conventions1.float_callee_save_regs Conventions1.float_caller_save_regs
 	 Clight.type_of_function Compopts.optim_postpass
-	 Archi.has_notrap_loads.
+	 Archi.has_notrap_loads
+         CSE3analysis.internal_analysis CSE3analysis.eq_depends_on_mem.
 
 Extraction Library Ordered.
