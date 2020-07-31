@@ -1,4 +1,5 @@
 [submodule "CompCert"]
 	path = CompCert
-	url = https://github.com/Lionel-Rieg/CompCert.git
+	url = git@gricad-gitlab.univ-grenoble-alpes.fr:sixcy/CompCert.git
+	branch = kvx-work-velus
 	ignore = dirty
