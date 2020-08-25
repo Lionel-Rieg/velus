@@ -496,7 +496,9 @@ Module Export Op <: OPERATORS.
     intros ty ty'.
     destruct ty, ty';
       try destruct i, s; try destruct i0; try destruct s0;
-      try destruct f; try destruct f0; auto.
+      try destruct f; try destruct f0; auto;
+      try now cbn; unfold Ctyping.check_cast, Cop.classify_cast;
+              destruct Archi.ptr64 eqn:Hptr_size.
   Qed.
 
   Ltac GoalMatchMatch :=
@@ -698,7 +700,8 @@ Module Export Op <: OPERATORS.
     unfold Ctyping.type_binop, Ctyping.binarith_type,
            Ctyping.comparison_type, Ctyping.binarith_int_type,
            Ctyping.shift_op_type in Htype.
-    DestructCases; discriminate.
+    DestructCases; solve [ discriminate
+                         | unfold Ctyping.ptrdiff_t; destruct Archi.ptr64; discriminate ].
   Qed.
 
   Lemma pres_sem_binop:
@@ -732,8 +735,11 @@ Module Export Op <: OPERATORS.
         inv Hwt1; inv Hwt2;
           repeat match goal with H:?x = ?x -> _ \/ _ |- _ =>
                                  destruct (H eq_refl); clear H end;
-          subst;
-          vm_compute in Hsem;
+          subst; simpl in Hsem;
+          unfold Cop.sem_and, Cop.sem_or, Cop.sem_xor,
+                 Cop.sem_binarith, Cop.sem_cast, Cop.classify_cast,
+                 Cop.classify_binarith, Cop.binarith_type in Hsem;
+          destruct Archi.ptr64;
           injection Hsem; intro; subst v; auto.
     - (* Everything else. *)
       destruct (Ctyping.type_binop op (cltype ty1) (cltype ty2)) eqn:Hok;
@@ -844,8 +850,8 @@ Module Export Op <: OPERATORS.
   Proof.
     intros * Hnptr.
     unfold Cop.sem_cast.
-    destruct (Cop.classify_cast ty1 ty2); auto.
-    destruct v; auto.
+    destruct (Cop.classify_cast ty1 ty2); auto;
+    destruct v, Archi.ptr64; auto;
     specialize (Hnptr b i); contradiction.
   Qed.
 
@@ -1034,7 +1040,8 @@ Module Export Op <: OPERATORS.
     - destruct u, ty; try destruct i; try destruct s; try destruct f;
         simpl in *; now DestructCases.
     - destruct t, ty; try destruct i; try destruct s; try destruct f;
-        try destruct f0; simpl in *; DestructCases; auto.
+        try destruct f0; simpl in *; DestructCases; auto;
+        unfold Ctyping.check_cast, Cop.classify_cast; destruct Archi.ptr64; auto.
   Qed.
 
   Lemma type_binop'_correct:

@@ -467,7 +467,8 @@ Lemma sizeof_by_value:
 Proof.
   destruct ty; try (intros; discriminate);
     [destruct i, s, a|destruct s, a|destruct f, a|];
-    injection 1; intros; subst; reflexivity.
+    injection 1; intros; subst; try reflexivity;
+    now unfold size_chunk, AST.Mptr; cbn; destruct Archi.ptr64.
 Qed.
 Hint Resolve sizeof_by_value : core.
 
